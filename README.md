@@ -95,28 +95,35 @@ Built as a **personal app**, not a public SaaS.
 
 ## 📂 Project Structure
 
+---
+
+## 📁 Project Structure
+
+```text
 J.A.R.V.I.S/
 ├── public/
-│ ├── index.html
-│ ├── login.html
-│ ├── jarvis.html
-│ ├── calendar.html
-│ ├── tasks.html
-│ ├── study.html
-│ ├── progress.html
-│ ├── library.html
-│ ├── styles.css
-│ ├── sounds.js
-│ └── sounds/
-│ ├── startup.mp3
-│ ├── send.mp3
-│ ├── reply.mp3
-│ ├── panel-open.mp3
-│ └── panel-close.mp3
+│   ├── index.html
+│   ├── login.html
+│   ├── jarvis.html
+│   ├── calendar.html
+│   ├── tasks.html
+│   ├── study.html
+│   ├── progress.html
+│   ├── library.html
+│   ├── styles.css
+│   ├── sounds.js
+│   └── sounds/
+│       ├── startup.mp3
+│       ├── send.mp3
+│       ├── reply.mp3
+│       ├── panel-open.mp3
+│       └── panel-close.mp3
 ├── server.js
 ├── package.json
+├── package-lock.json
 ├── .gitignore
 └── .env (ignored)
+
 
 
 ---
