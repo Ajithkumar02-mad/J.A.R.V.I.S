@@ -1,189 +1,162 @@
-🤖 J.A.R.V.I.S – Personal AI Productivity Assistant
-J.A.R.V.I.S is a secure, personal AI-powered productivity system inspired by Iron Man’s assistant.
-It combines task management, study planning, time tracking, calendar visualization, and an AI chat console — all protected with authentication and auto-lock security.
+<p align="center">
+  <img src="https://img.shields.io/badge/J.A.R.V.I.S-AI%20Assistant-00e5ff?style=for-the-badge&logo=react&logoColor=black"/>
+</p>
 
-This project is built as a personal app, designed to run locally with full backend security.
+<h1 align="center">🤖 J.A.R.V.I.S</h1>
 
-✨ Key Features
-🔐 Security
-Password-protected login
+<p align="center">
+  <b>Personal AI Productivity Assistant</b><br/>
+  Secure • Intelligent • Futuristic
+</p>
 
-Encrypted password storage (bcrypt)
+<p align="center">
+  <img src="https://img.shields.io/github/languages/top/Ajithkumar02-mad/J.A.R.V.I.S"/>
+  <img src="https://img.shields.io/github/last-commit/Ajithkumar02-mad/J.A.R.V.I.S"/>
+  <img src="https://img.shields.io/badge/status-active-success"/>
+</p>
 
-Session-based authentication
+---
 
-Auto-lock after inactivity (1 minute)
+## ✨ What is J.A.R.V.I.S?
 
-Manual lock button (Power icon)
+**J.A.R.V.I.S** is a **locally hosted, secure AI-powered productivity system**, inspired by Iron Man’s assistant.
 
-.env protected secrets (not pushed to GitHub)
+It helps you:
+- Track work time  
+- Manage tasks & study plans  
+- Visualize progress  
+- Interact via an AI console  
+- Stay secure with auto-lock & authentication  
 
-⏱ Work Timer & Analytics
-HH : MM : SS : MS timer
+Built as a **personal app**, not a public SaaS.
 
-Start / Pause / Stop / Reset
+---
 
-Daily / Weekly / Monthly work graphs
+## 🔐 Security First
 
-Calendar-linked work history
+- 🔑 Password-based login
+- 🧠 bcrypt password hashing
+- 🪪 Session-based authentication
+- ⏱ Auto-lock after inactivity
+- 🔘 Manual lock button
+- 🧾 Secrets stored in `.env` (never pushed)
 
-Clear work history option
+> Your data stays **local & private**.
 
-📅 Calendar & Planning
-Task-based calendar view
+---
 
-Daily task breakdown
+## ⏱ Timer & Analytics
 
-Work-time graph per date
+- HH : MM : SS : MS timer
+- Start / Pause / Reset
+- Daily / Weekly / Monthly graphs
+- Calendar-linked work history
+- Clear work history option
 
-Study plans & events integration
+---
 
-📚 Productivity Modules
-Tasks manager
+## 📅 Productivity Modules
 
-Study planner
+| Module | Description |
+|------|------------|
+| 🗂 Tasks | Daily task management |
+| 📚 Study Planner | Study scheduling |
+| 📈 Progress | Work analytics |
+| 📆 Calendar | Task & work visualization |
+| 📖 Library | Books & PDFs |
+| 🤖 AI Console | Chat with J.A.R.V.I.S |
 
-Progress tracker
+---
 
-Library (Books & PDFs)
+## 🤖 J.A.R.V.I.S AI Console
 
-AI Console
+- Natural chat interface  
+- Command detection (open calendar, tasks, study…)  
+- Secure backend AI API  
+- Audio feedback for actions  
 
-🧠 J.A.R.V.I.S AI Console
-Chat-based AI interaction
+---
 
-Command detection (open calendar, study, progress, etc.)
+## 🛠 Tech Stack
 
-Secure backend API integration
+**Frontend**
+- HTML
+- CSS
+- JavaScript (Vanilla)
 
-Sound effects for interactions
+**Backend**
+- Node.js
+- Express.js
+- express-session
+- bcrypt
+- dotenv
 
-🔊 UI & Experience
-Futuristic HUD-style interface
+---
 
-Panel animations
+## 📂 Project Structure
 
-Sound effects for actions
-
-Fully responsive layout
-
-🛠 Tech Stack
-Frontend
-HTML5
-
-CSS3 (custom futuristic UI)
-
-Vanilla JavaScript
-
-Backend
-Node.js
-
-Express.js
-
-Express-session
-
-bcrypt
-
-dotenv
-
-Storage
-LocalStorage (frontend state)
-
-IndexedDB (tasks & study data)
-
-Session cookies (auth)
-
-📂 Project Structure
-pgsql
-Copy code
 J.A.R.V.I.S/
-│
 ├── public/
-│   ├── index.html
-│   ├── login.html
-│   ├── jarvis.html
-│   ├── calendar.html
-│   ├── tasks.html
-│   ├── study.html
-│   ├── progress.html
-│   ├── library.html
-│   ├── styles.css
-│   ├── sounds.js
-│   └── sounds/
-│       ├── startup.mp3
-│       ├── send.mp3
-│       ├── reply.mp3
-│       ├── panel-open.mp3
-│       └── panel-close.mp3
-│
+│ ├── index.html
+│ ├── login.html
+│ ├── jarvis.html
+│ ├── calendar.html
+│ ├── tasks.html
+│ ├── study.html
+│ ├── progress.html
+│ ├── library.html
+│ ├── styles.css
+│ ├── sounds.js
+│ └── sounds/
+│ ├── startup.mp3
+│ ├── send.mp3
+│ ├── reply.mp3
+│ ├── panel-open.mp3
+│ └── panel-close.mp3
 ├── server.js
 ├── package.json
-├── package-lock.json
 ├── .gitignore
-└── .env   (ignored)
-🚀 Getting Started (Local Setup)
-1️⃣ Clone the repository
-bash
-Copy code
+└── .env (ignored)
+
+
+---
+
+## 🚀 Run Locally
+
+```bash
 git clone https://github.com/Ajithkumar02-mad/J.A.R.V.I.S.git
 cd J.A.R.V.I.S
-2️⃣ Install dependencies
-bash
-Copy code
 npm install
-3️⃣ Create .env file
-env
-Copy code
-SESSION_SECRET=your_session_secret
-APP_PASSWORD=your_password
-OPENAI_API_KEY=your_api_key
-⚠️ Never push .env to GitHub.
-
-4️⃣ Start the server
-bash
-Copy code
 npm start
-5️⃣ Open in browser
-arduino
-Copy code
+
+## 🚀 Open the App
+
+```text
 http://localhost:3000
-🔑 Authentication Flow
-App opens → Login page
 
-Enter password
+## 🔒 Authentication Flow
 
-Session created
+- App starts → Login screen  
+- 🔑 Password verification  
+- 🧾 Secure session created  
+- 🖥 Access J.A.R.V.I.S dashboard  
+- ⏱ Auto-lock after inactivity **or**  
+- 🔘 Manual lock button  
+- 🔁 Redirects back to login  
 
-Access J.A.R.V.I.S dashboard
+---
 
-Auto-lock after inactivity OR manual lock
+## 🧪 Intended Use
 
-Redirects back to login
+- ✅ Personal productivity assistant  
+- ✅ Local system (offline-first)  
+- ❌ Not a production SaaS  
+- ❌ No cloud data storage  
 
-🧪 Security Notes
-Passwords are hashed using bcrypt
+---
 
-Sessions expire on logout / auto-lock
+## 👤 Author
 
-.env, API keys, secrets are ignored via .gitignore
+**P Ajith Kumar**  
+Aspiring **AI Engineer** & **Full Stack Developer**
 
-Designed for personal use
-
-📱 Future Plans
-Android app (Capacitor / TWA)
-
-Offline-first mode
-
-Voice commands
-
-Cloud sync (optional)
-
-Multi-user profiles
-
-👤 Author
-Ajith Kumar
-Aspiring AI Engineer & Full Stack Developer
-Building projects with learning-first mindset 🚀
-
-📜 License
-This project is for personal and educational use.
