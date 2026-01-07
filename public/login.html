@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>J.A.R.V.I.S Login</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: radial-gradient(circle at center, #020b18, #000);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      color: #00e5ff;
+    }
+
+    .login-box {
+      background: rgba(0, 10, 20, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.4);
+      text-align: center;
+      width: 320px;
+    }
+
+    .login-box h2 {
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      background: #000;
+      border: 1px solid #00e5ff;
+      color: #00e5ff;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 10px;
+      background: #00e5ff;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .login-box button:hover {
+      background: #00cfe0;
+    }
+
+    .hint {
+      margin-top: 12px;
+      font-size: 12px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+  <form class="login-box" method="POST" action="/login">
+    <h2>🔐 Enter Password</h2>
+
+    <input
+      type="password"
+      name="password"
+      placeholder="********"
+      required
+      autofocus
+    />
+
+    <button type="submit">ACCESS J.A.R.V.I.S</button>
+
+    <div class="hint">Welcome home, Ajith</div>
+  </form>
+
+</body>
+</html>

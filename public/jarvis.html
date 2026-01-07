@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>J.A.R.V.I.S – AI Console</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header>
+  <div class="logo">
+    <a href="index.html">J.A.R.V.I.S</a>
+    <div class="logo-underline"></div>
+  </div>
+
+  <div class="hud-clock-wrapper">
+    <div class="hud-clock" id="hud-clock">--:--:--</div>
+    <div class="hud-date">
+      <div id="hud-date">--.--.----</div>
+      <div id="hud-day">----</div>
+    </div>
+  </div>
+
+  <div class="status">
+    <div class="status-line">
+      <span class="status-dot"></span>
+      <span class="status-text">Hello · Welcome, Ajith</span>
+    </div>
+    <div class="workspace-logo">
+      <span class="workspace-main">AJITH WORKSPACE</span>
+      <span class="workspace-arrow"></span>
+    </div>
+  </div>
+</header>
+
+<!-- ================= MAIN ================= -->
+<div class="page-wrap">
+  <div class="page-inner">
+
+    <div class="panel-header" onclick="closePanel()">
+      ◉ J.A.R.V.I.S CHAT CONSOLE
+    </div>
+
+    <div class="card jarvis-card">
+
+      <div class="section-title">J.A.R.V.I.S CONSOLE</div>
+      <div class="section-subtitle">
+        Ask about your tasks, study plans, calendar, progress, or library.
+      </div>
+
+      <div class="jarvis-layout">
+
+        <!-- CHAT -->
+        <section class="jarvis-chat-main">
+          <div id="jarvis-log" class="jarvis-log"></div>
+
+          <div class="jarvis-input-wrap">
+            <div class="jarvis-quick-row">
+              <button class="quick-btn" data-prompt="What is my day plan today?">Today</button>
+              <button class="quick-btn" data-prompt="Show my study plan.">Study</button>
+              <button class="quick-btn" data-prompt="Summarize my schedule this week.">Week</button>
+              <button class="quick-btn" data-prompt="What should I work on now?">Now</button>
+            </div>
+
+            <div class="jarvis-input-row">
+              <textarea id="jarvis-input" rows="2"
+                placeholder="Type here… (Enter to send · Shift+Enter new line)"></textarea>
+              <button id="jarvis-send" class="primary">SEND</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SIDE -->
+        <aside class="jarvis-side">
+          <div class="card-inner-title">CONSOLE NOTES</div>
+          <div class="jarvis-side-text">
+            J.A.R.V.I.S can read your Tasks, Study Planner, Calendar,
+            Progress stats, and Library structure.
+          </div>
+          <div class="divider subtle"></div>
+          <button id="jarvis-clear-chat" class="ghost full-width">
+            Clear conversation
+          </button>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔊 SOUNDS -->
+<script src="sounds.js"></script>
+
+<script>
+/* ================= CLOCK ================= */
+/* ============ CLOCK ============ */
+const hudClock = document.getElementById("hud-clock");
+const hudDate  = document.getElementById("hud-date");
+const hudDay   = document.getElementById("hud-day");
+
+function updateClock() {
+  const now = new Date();
+
+  // TIME
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  hudClock.textContent = `${h}:${m}:${s}`;
+
+  // DATE
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  hudDate.textContent = `${dd}-${mm}-${yyyy}`;
+
+  // DAY
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  hudDay.textContent = days[now.getDay()];
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ================= AUDIO UNLOCK ================= */
+let audioUnlocked = false;
+document.addEventListener("click", () => audioUnlocked = true, { once:true });
+
+/* ================= CLOSE ================= */
+function closePanel() {
+  playJarvisSound("panelClose");
+  setTimeout(() => location.href = "index.html", 200);
+}
+
+/* ================= CHAT ================= */
+const CHAT_KEY = "jarvisChatHistoryV1";
+let chatHistory = JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
+
+function renderChat() {
+  const log = document.getElementById("jarvis-log");
+  log.innerHTML = "";
+  chatHistory.forEach(m => {
+    const row = document.createElement("div");
+    row.className = "jarvis-msg-row " + (m.role === "user" ? "from-user" : "from-jarvis");
+    row.innerHTML = `
+      <div class="jarvis-bubble">
+        <div class="jarvis-msg-meta">${m.role === "user" ? "You" : "J.A.R.V.I.S"}</div>
+        <div class="jarvis-msg-text">${m.text}</div>
+      </div>`;
+    log.appendChild(row);
+  });
+  log.scrollTop = log.scrollHeight;
+}
+
+/* ================= COMMAND DETECTOR ================= */
+function detectJarvisCommand(text) {
+  const t = text.toLowerCase();
+  if (t.includes("open library")) return "LIBRARY";
+  if (t.includes("open calendar")) return "CALENDAR";
+  if (t.includes("open progress")) return "PROGRESS";
+  if (t.includes("open study")) return "STUDY";
+  return null;
+}
+
+/* ================= AI CALL (FIXED) ================= */
+async function sendToJarvisAPI(userText) {
+  const res = await fetch("/api/jarvis-chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ message: userText })
+  });
+
+  const data = await res.json();
+
+  if (data.reply) {
+    return data.reply;
+  } else {
+    throw new Error("No reply from JARVIS");
+  }
+}
+
+
+/* ================= SEND ================= */
+async function handleSend() {
+  if (!audioUnlocked) return;
+
+  playJarvisSound("send");
+
+  const input = document.getElementById("jarvis-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  chatHistory.push({ role:"user", text });
+  renderChat();
+  input.value = "";
+
+  const cmd = detectJarvisCommand(text);
+  if (cmd) {
+    playJarvisSound("panelOpen");
+    chatHistory.push({ role:"jarvis", text:`Opening ${cmd.toLowerCase()} module.` });
+    renderChat();
+    setTimeout(() => location.href = cmd.toLowerCase()+".html", 500);
+    return;
+  }
+
+  try {
+    const reply = await sendToJarvisAPI(text);
+    playJarvisSound("reply");
+    chatHistory.push({ role:"jarvis", text: reply });
+  } catch {
+    chatHistory.push({ role:"jarvis", text:"Unable to reach AI backend." });
+  }
+
+  localStorage.setItem(CHAT_KEY, JSON.stringify(chatHistory));
+  renderChat();
+}
+
+/* ================= INIT ================= */
+document.getElementById("jarvis-send").onclick = handleSend;
+document.getElementById("jarvis-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+document.querySelectorAll(".quick-btn").forEach(btn => {
+  btn.onclick = () => {
+    const input = document.getElementById("jarvis-input");
+    input.value = btn.dataset.prompt;
+    input.focus();
+  };
+});
+
+document.getElementById("jarvis-clear-chat").onclick = () => {
+  chatHistory = [];
+  localStorage.removeItem(CHAT_KEY);
+  renderChat();
+};
+
+renderChat();
+</script>
+
+</body>
+</html>

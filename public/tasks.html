@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>J.A.R.V.I.S – Tasks</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo"><a href="index.html">J.A.R.V.I.S</a></div>
+    <div class="hud-clock-wrapper">
+  <div class="hud-clock" id="hud-clock">--:--:--</div>
+  <div class="hud-date">
+    <div id="hud-date">--.--.----</div>
+    <div id="hud-day">----</div>
+  </div>
+</div>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      Tasks module · Day-to-day control, Ajith
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-inner">
+      <!-- click top bar to go back -->
+      <div class="panel-header" onclick="closePanel()">◉ TASKS MODULE</div>
+
+      <div class="card">
+        <div class="tasks-header-row">
+
+  <div class="section-title">TASKS</div>
+  <div class="section-subtitle">
+  Plan your day-to-day work with priorities, subtasks and due dates.
+</div>
+
+
+  <!-- TASK TIMER -->
+  <div class="task-timer">
+
+    <div class="task-timer-time" id="task-timer-display">
+      00:00:00.00
+    </div>
+
+    <div class="task-timer-actions">
+      <button id="task-timer-start">Start</button>
+      <button id="task-timer-pause" disabled>Pause</button>
+      <button id="task-timer-stop" disabled>Stop</button>
+      <button id="task-timer-reset">Reset</button>
+    </div>
+
+  </div>
+
+</div>
+
+
+        <div class="tasks-layout">
+          <!-- LEFT FILTERS / SUMMARY -->
+          <aside class="tasks-sidebar">
+            <div class="card-inner-title">OVERVIEW</div>
+
+            <div id="tasks-summary" class="tasks-summary">
+              0 tasks · 0 completed
+            </div>
+
+            <div class="tasks-filters-title">Views</div>
+            <div id="tasks-filters" class="tasks-filters">
+              <button class="filter-chip active" data-filter="all">All</button>
+              <button class="filter-chip" data-filter="today">Today</button>
+              <button class="filter-chip" data-filter="upcoming">Upcoming</button>
+              <button class="filter-chip" data-filter="overdue">Overdue</button>
+              <button class="filter-chip" data-filter="completed">Completed</button>
+            </div>
+
+            <div class="tasks-hint">
+              Tip: use <strong>High</strong> priority for important work,
+              <strong>Medium</strong> for normal, <strong>Low</strong> for optional.
+            </div>
+          </aside>
+
+          <!-- RIGHT: FORM + LIST -->
+          <section class="tasks-main">
+            <div class="tasks-form">
+              <div class="card-inner-title">ADD TASK</div>
+
+              <div class="tasks-form-grid">
+                <div class="field">
+                  <label>Title</label>
+                  <input id="task-title" type="text" placeholder="e.g., DSA revision – stacks & queues" />
+                </div>
+
+                <div class="field">
+                  <label>Category</label>
+                  <input id="task-category" type="text" placeholder="Study, Project, Personal..." />
+                </div>
+
+                <div class="field">
+                  <label>Priority</label>
+                  <select id="task-priority">
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Due Date</label>
+                  <input id="task-due" type="date" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Notes</label>
+                <textarea
+                  id="task-notes"
+                  rows="2"
+                  placeholder="Short details: links, what to cover, etc."
+                ></textarea>
+              </div>
+
+              <div class="tasks-form-actions">
+                <button id="task-save-btn" class="primary" type="button">
+                  + ADD TASK
+                </button>
+                <button id="task-clear-btn" class="ghost" type="button">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div class="divider subtle"></div>
+
+            <div class="card-inner-title">TASK LIST</div>
+            <div id="tasks-empty" class="tasks-empty">
+              No tasks yet in this view.<br />
+              Add a task above to get started.
+            </div>
+            <div id="tasks-list" class="tasks-list"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sounds.js"></script>
+
+
+  <script>
+    /* ---------- CLOCK ---------- */
+   let lastDateKey = null;
+
+function updateClock() {
+  const timeEl = document.getElementById("hud-clock");
+  const dateEl = document.getElementById("hud-date");
+  const dayEl  = document.getElementById("hud-day");
+  const dateWrap = document.querySelector(".hud-date");
+
+  if (!timeEl || !dateEl || !dayEl || !dateWrap) return;
+
+  const now = new Date();
+
+  /* ---------- TIME ---------- */
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  timeEl.textContent = `${h}:${m}:${s}`;
+
+  /* ---------- DATE ---------- */
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const todayKey = `${dd}-${mm}-${yyyy}`;
+
+  /* ---------- MIDNIGHT FADE ---------- */
+  if (lastDateKey && lastDateKey !== todayKey) {
+    dateWrap.classList.remove("show");
+    dateWrap.classList.add("fade");
+
+    setTimeout(() => {
+      dateEl.textContent = todayKey;
+      dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+      dateWrap.classList.remove("fade");
+      dateWrap.classList.add("show");
+    }, 600);
+  } else {
+    dateEl.textContent = todayKey;
+    dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+    dateWrap.classList.add("show");
+  }
+
+  lastDateKey = todayKey;
+
+  /* ---------- WEEKEND COLOR LOGIC ---------- */
+  dateWrap.classList.remove("weekday", "saturday", "sunday");
+
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  if (day === 0) {
+    dateWrap.classList.add("sunday");
+  } else if (day === 6) {
+    dateWrap.classList.add("saturday");
+  } else {
+    dateWrap.classList.add("weekday");
+  }
+}
+    updateClock();
+    setInterval(updateClock, 1000);
+
+  /* ---------- CLOSE TO HUD ---------- */
+ function closePanel() {
+  playJarvisSound("panelClose");
+
+  const card = document.querySelector(".card");
+  if (card) {
+    card.style.transform = "scale(0.92)";
+    card.style.opacity = "0";
+    card.style.transition = "0.25s ease";
+  }
+
+  // ⏱️ Wait for sound + animation
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 350); // 👈 IMPORTANT
+}
+
+    /* ---------- TASKS DB (IndexedDB) ---------- */
+
+    const TASK_DB_NAME = "jarvisTasksV1";
+    const TASK_DB_VERSION = 1;
+    const TASK_STORE = "tasks";
+
+    let taskDb = null;
+    let currentFilter = "all"; // all, today, upcoming, overdue, completed
+    let editingTaskId = null;
+
+    async function openTaskDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(TASK_DB_NAME, TASK_DB_VERSION);
+
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(TASK_STORE)) {
+            const store = db.createObjectStore(TASK_STORE, {
+              keyPath: "id",
+              autoIncrement: true
+            });
+            store.createIndex("done", "done", { unique: false });
+            store.createIndex("dueDate", "dueDate", { unique: false });
+          }
+        };
+
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function getAllTasks() {
+      const tx = taskDb.transaction(TASK_STORE, "readonly");
+      const store = tx.objectStore(TASK_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function addTask(task) {
+      const tx = taskDb.transaction(TASK_STORE, "readwrite");
+      const store = tx.objectStore(TASK_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.add(task);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function updateTask(task) {
+      const tx = taskDb.transaction(TASK_STORE, "readwrite");
+      const store = tx.objectStore(TASK_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.put(task);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function deleteTask(id) {
+      const tx = taskDb.transaction(TASK_STORE, "readwrite");
+      const store = tx.objectStore(TASK_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function getTaskById(id) {
+      const tx = taskDb.transaction(TASK_STORE, "readonly");
+      const store = tx.objectStore(TASK_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    /* ---------- SUBTASK HELPERS ---------- */
+
+    function ensureSubtasksArray(task) {
+      if (!Array.isArray(task.subtasks)) {
+        task.subtasks = [];
+      }
+    }
+
+    async function addSubtask(taskId, text) {
+      const task = await getTaskById(taskId);
+      if (!task) return;
+      ensureSubtasksArray(task);
+
+      const subtask = {
+        id: Date.now() + Math.random(),
+        text: text,
+        done: false,
+        createdAt: Date.now()
+      };
+      task.subtasks.push(subtask);
+      await updateTask(task);
+      await renderTasks();
+    }
+
+    async function toggleSubtaskDone(taskId, subtaskId, checked) {
+      const task = await getTaskById(taskId);
+      if (!task) return;
+      ensureSubtasksArray(task);
+
+      const sub = task.subtasks.find(st => st.id === subtaskId);
+      if (sub) {
+        sub.done = checked;
+      }
+
+      // auto-complete parent if all subtasks done & at least one exists
+      if (task.subtasks.length > 0) {
+        const allDone = task.subtasks.every(st => st.done);
+        task.done = allDone;
+      }
+
+      await updateTask(task);
+      await renderTasks();
+    }
+
+    async function deleteSubtask(taskId, subtaskId) {
+      const task = await getTaskById(taskId);
+      if (!task) return;
+      ensureSubtasksArray(task);
+
+      task.subtasks = task.subtasks.filter(st => st.id !== subtaskId);
+
+      // if no subtasks left, keep parent done status as is
+      await updateTask(task);
+      await renderTasks();
+    }
+
+    /* ---------- FILTERING ---------- */
+
+    function isToday(dateStr) {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      const today = new Date();
+      return (
+        d.getFullYear() === today.getFullYear() &&
+        d.getMonth() === today.getMonth() &&
+        d.getDate() === today.getDate()
+      );
+    }
+
+    function isOverdue(dateStr) {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      const today = new Date();
+      d.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      return d < today;
+    }
+
+    function isUpcoming(dateStr) {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      const today = new Date();
+      d.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      return d > today;
+    }
+
+    function applyFilter(tasks) {
+      switch (currentFilter) {
+        case "today":
+          return tasks.filter(t => !t.done && isToday(t.dueDate));
+        case "upcoming":
+          return tasks.filter(t => !t.done && isUpcoming(t.dueDate));
+        case "overdue":
+          return tasks.filter(t => !t.done && isOverdue(t.dueDate));
+        case "completed":
+          return tasks.filter(t => t.done);
+        default:
+          return tasks;
+      }
+    }
+
+    /* ---------- RENDER ---------- */
+
+    function formatDateNice(dateStr) {
+      if (!dateStr) return "No due date";
+      const d = new Date(dateStr);
+      return d.toLocaleDateString(undefined, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function priorityLabel(priority) {
+      if (priority === "high") return "High";
+      if (priority === "low") return "Low";
+      return "Medium";
+    }
+
+    async function renderTasks() {
+      const listEl = document.getElementById("tasks-list");
+      const emptyEl = document.getElementById("tasks-empty");
+      const summaryEl = document.getElementById("tasks-summary");
+
+      let tasks = await getAllTasks();
+
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.done).length;
+      summaryEl.textContent = `${total} tasks · ${completed} completed`;
+
+      // normalize subtasks
+      tasks.forEach(t => ensureSubtasksArray(t));
+
+      tasks.sort((a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        if (a.dueDate && b.dueDate) {
+          const da = new Date(a.dueDate).getTime();
+          const db = new Date(b.dueDate).getTime();
+          if (da !== db) return da - db;
+        }
+        const pOrder = { high: 0, medium: 1, low: 2 };
+        return (pOrder[a.priority] || 1) - (pOrder[b.priority] || 1);
+      });
+
+      tasks = applyFilter(tasks);
+
+      listEl.innerHTML = "";
+
+      if (!tasks.length) {
+        emptyEl.style.display = "block";
+        return;
+      }
+      emptyEl.style.display = "none";
+
+      tasks.forEach(task => {
+        const rowWrapper = document.createElement("div");
+        rowWrapper.className = "task-row-wrapper";
+
+        const row = document.createElement("div");
+        row.className = "task-row" + (task.done ? " done" : "");
+
+        const left = document.createElement("div");
+        left.className = "task-left";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.className = "task-checkbox";
+        checkbox.onchange = async () => {
+          task.done = checkbox.checked;
+          await updateTask(task);
+          renderTasks();
+        };
+
+        const titleBlock = document.createElement("div");
+        titleBlock.className = "task-title-block";
+
+        const title = document.createElement("div");
+        title.className = "task-title";
+        title.textContent = task.title || "(No title)";
+
+        const meta = document.createElement("div");
+        meta.className = "task-meta";
+        const cat = task.category ? task.category : "General";
+        meta.textContent =
+          cat + " • " + (task.dueDate ? formatDateNice(task.dueDate) : "No due date");
+
+        titleBlock.appendChild(title);
+        titleBlock.appendChild(meta);
+
+        left.appendChild(checkbox);
+        left.appendChild(titleBlock);
+
+        const right = document.createElement("div");
+        right.className = "task-right";
+
+        const priority = document.createElement("span");
+        priority.className = "priority-pill " + task.priority;
+        priority.textContent = priorityLabel(task.priority);
+        right.appendChild(priority);
+
+        // subtasks summary button
+        const completedSub = task.subtasks.filter(st => st.done).length;
+        const totalSub = task.subtasks.length;
+        const subBtn = document.createElement("button");
+        subBtn.className = "small-btn ghost subtle-subtasks-btn";
+        if (totalSub > 0) {
+          subBtn.textContent = `Subtasks ${completedSub}/${totalSub}`;
+        } else {
+          subBtn.textContent = "Subtasks";
+        }
+        subBtn.onclick = () => {
+          const panel = document.getElementById(`subtasks-${task.id}`);
+          if (panel) {
+            panel.classList.toggle("open");
+          }
+        };
+        right.appendChild(subBtn);
+
+        if (task.notes) {
+          const notesIcon = document.createElement("span");
+          notesIcon.className = "task-notes-indicator";
+          notesIcon.title = task.notes;
+          notesIcon.textContent = "✎";
+          right.appendChild(notesIcon);
+        }
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "small-btn";
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => {
+          startEditTask(task);
+        };
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "small-btn";
+        delBtn.textContent = "Delete";
+        delBtn.onclick = async () => {
+          if (confirm("Delete this task?")) {
+            await deleteTask(task.id);
+            renderTasks();
+          }
+        };
+
+        right.appendChild(editBtn);
+        right.appendChild(delBtn);
+
+        row.appendChild(left);
+        row.appendChild(right);
+
+        // SUBTASK PANEL (expand/collapse)
+        const subPanel = document.createElement("div");
+        subPanel.className = "subtasks-panel";
+        subPanel.id = `subtasks-${task.id}`;
+
+        const subHeader = document.createElement("div");
+        subHeader.className = "subtasks-header";
+
+        const subTitle = document.createElement("div");
+        subTitle.className = "subtasks-title";
+        subTitle.textContent = "Subtasks";
+        subHeader.appendChild(subTitle);
+
+        if (totalSub > 0) {
+          const subProgress = document.createElement("div");
+          subProgress.className = "subtasks-progress-label";
+          const pct = Math.round((completedSub / totalSub) * 100);
+          subProgress.textContent = `${completedSub}/${totalSub} • ${pct}%`;
+          subHeader.appendChild(subProgress);
+        }
+
+        subPanel.appendChild(subHeader);
+
+        const subList = document.createElement("div");
+        subList.className = "subtasks-list";
+
+        if (task.subtasks.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "subtasks-empty";
+          empty.textContent = "No subtasks yet. Add one below.";
+          subList.appendChild(empty);
+        } else {
+          task.subtasks
+            .slice()
+            .sort((a, b) => a.createdAt - b.createdAt)
+            .forEach(sub => {
+              const item = document.createElement("div");
+              item.className = "subtask-item" + (sub.done ? " done" : "");
+
+              const subLeft = document.createElement("div");
+              subLeft.className = "subtask-left";
+
+              const subChk = document.createElement("input");
+              subChk.type = "checkbox";
+              subChk.checked = sub.done;
+              subChk.className = "subtask-checkbox";
+              subChk.onchange = () => {
+                toggleSubtaskDone(task.id, sub.id, subChk.checked);
+              };
+
+              const subText = document.createElement("div");
+              subText.className = "subtask-text";
+              subText.textContent = sub.text;
+
+              subLeft.appendChild(subChk);
+              subLeft.appendChild(subText);
+
+              const subRight = document.createElement("div");
+              subRight.className = "subtask-right";
+
+              const delSubBtn = document.createElement("button");
+              delSubBtn.className = "small-btn";
+              delSubBtn.textContent = "×";
+              delSubBtn.title = "Delete subtask";
+              delSubBtn.onclick = () => {
+                if (confirm("Delete this subtask?")) {
+                  deleteSubtask(task.id, sub.id);
+                }
+              };
+
+              subRight.appendChild(delSubBtn);
+
+              item.appendChild(subLeft);
+              item.appendChild(subRight);
+              subList.appendChild(item);
+            });
+        }
+
+        subPanel.appendChild(subList);
+
+        // add subtask input row
+        const addRow = document.createElement("div");
+        addRow.className = "subtask-add-row";
+
+        const addInput = document.createElement("input");
+        addInput.type = "text";
+        addInput.placeholder = "Add a subtask...";
+        addInput.className = "subtask-input";
+
+        const addButton = document.createElement("button");
+        addButton.className = "small-btn";
+        addButton.textContent = "+";
+        addButton.onclick = () => {
+          const text = addInput.value.trim();
+          if (!text) return;
+          addSubtask(task.id, text);
+          addInput.value = "";
+        };
+
+        addInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const text = addInput.value.trim();
+            if (!text) return;
+            addSubtask(task.id, text);
+            addInput.value = "";
+          }
+        });
+
+        addRow.appendChild(addInput);
+        addRow.appendChild(addButton);
+        subPanel.appendChild(addRow);
+
+        rowWrapper.appendChild(row);
+        rowWrapper.appendChild(subPanel);
+        listEl.appendChild(rowWrapper);
+      });
+    }
+
+    function clearTaskForm() {
+      document.getElementById("task-title").value = "";
+      document.getElementById("task-category").value = "";
+      document.getElementById("task-priority").value = "medium";
+      document.getElementById("task-due").value = "";
+      document.getElementById("task-notes").value = "";
+      editingTaskId = null;
+      document.getElementById("task-save-btn").textContent = "+ ADD TASK";
+    }
+
+    function startEditTask(task) {
+      editingTaskId = task.id;
+      document.getElementById("task-title").value = task.title || "";
+      document.getElementById("task-category").value = task.category || "";
+      document.getElementById("task-priority").value = task.priority || "medium";
+      document.getElementById("task-due").value = task.dueDate || "";
+      document.getElementById("task-notes").value = task.notes || "";
+      document.getElementById("task-save-btn").textContent = "SAVE CHANGES";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    /* ---------- INIT ---------- */
+
+    async function initTasks() {
+      try {
+        taskDb = await openTaskDB();
+        await renderTasks();
+      } catch (err) {
+        console.error("Error opening tasks DB:", err);
+      }
+
+      document.getElementById("task-save-btn").addEventListener("click", async () => {
+        const title = document.getElementById("task-title").value.trim();
+        const category = document.getElementById("task-category").value.trim();
+        const priority = document.getElementById("task-priority").value;
+        const dueDate = document.getElementById("task-due").value;
+        const notes = document.getElementById("task-notes").value.trim();
+
+        if (!title) {
+          alert("Please enter a task title.");
+          return;
+        }
+
+        if (editingTaskId) {
+          const existing = await getTaskById(editingTaskId);
+          if (existing) {
+            existing.title = title;
+            existing.category = category;
+            existing.priority = priority;
+            existing.dueDate = dueDate;
+            existing.notes = notes;
+            await updateTask(existing);
+          }
+        } else {
+          const newTask = {
+            title,
+            category,
+            priority,
+            dueDate,
+            notes,
+            done: false,
+            createdAt: Date.now(),
+            subtasks: []        // NEW: empty subtask list
+          };
+          await addTask(newTask);
+        }
+
+        clearTaskForm();
+        renderTasks();
+      });
+
+      document.getElementById("task-clear-btn").addEventListener("click", clearTaskForm);
+
+      // filter chips
+      document.querySelectorAll(".filter-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".filter-chip")
+            .forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentFilter = btn.dataset.filter;
+          renderTasks();
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", initTasks);
+
+    // ===== TASK TIMER (USES SAME ENGINE) =====
+
+const taskTimerDisplay = document.getElementById("task-timer-display");
+const tStart = document.getElementById("task-timer-start");
+const tPause = document.getElementById("task-timer-pause");
+const tStop  = document.getElementById("task-timer-stop");
+const tReset = document.getElementById("task-timer-reset");
+
+let taskTimerInterval = null;
+let taskStartTime = 0;
+let taskAccumulated = 0;
+let taskRunning = false;
+
+function formatTaskTime(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const ms2 = Math.floor((ms % 1000) / 10);
+
+  return (
+    String(h).padStart(2, "0") + ":" +
+    String(m).padStart(2, "0") + ":" +
+    String(s).padStart(2, "0") + "." +
+    String(ms2).padStart(2, "0")
+  );
+}
+
+function updateTaskTimer() {
+  const elapsed = Date.now() - taskStartTime + taskAccumulated;
+  taskTimerDisplay.textContent = formatTaskTime(elapsed);
+}
+
+tStart.onclick = () => {
+  if (taskRunning) return;
+  taskRunning = true;
+  taskStartTime = Date.now();
+  taskTimerInterval = setInterval(updateTaskTimer, 50);
+
+  tStart.disabled = true;
+  tPause.disabled = false;
+  tStop.disabled = false;
+};
+
+tPause.onclick = () => {
+  if (!taskRunning) return;
+  taskAccumulated += Date.now() - taskStartTime;
+  clearInterval(taskTimerInterval);
+  taskRunning = false;
+
+  tStart.disabled = false;
+  tPause.disabled = true;
+};
+
+tStop.onclick = () => {
+  if (taskRunning) {
+    taskAccumulated += Date.now() - taskStartTime;
+  }
+  clearInterval(taskTimerInterval);
+  taskRunning = false;
+
+  // 🔗 SAVE PER TASK HERE (you can connect later)
+  taskAccumulated = 0;
+  taskTimerDisplay.textContent = "00:00:00.00";
+
+  tStart.disabled = false;
+  tPause.disabled = true;
+  tStop.disabled = true;
+};
+
+tReset.onclick = () => {
+  clearInterval(taskTimerInterval);
+  taskRunning = false;
+  taskAccumulated = 0;
+  taskTimerDisplay.textContent = "00:00:00.00";
+
+  tStart.disabled = false;
+  tPause.disabled = true;
+  tStop.disabled = true;
+};
+
+
+  </script>
+
+
+</body>
+</html>

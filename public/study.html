@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>J.A.R.V.I.S – Study Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo"><a href="index.html">J.A.R.V.I.S</a></div>
+    <div class="hud-clock-wrapper">
+  <div class="hud-clock" id="hud-clock">--:--:--</div>
+  <div class="hud-date">
+    <div id="hud-date">--.--.----</div>
+    <div id="hud-day">----</div>
+  </div>
+</div>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      Study module · Planner & timetable, Ajith
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-inner">
+      <!-- click top bar to go back -->
+      <div class="panel-header" onclick="closePanel()">◉ STUDY MODULE</div>
+
+      <div class="card">
+        <div class="section-title">STUDY PLANNER</div>
+        <div class="section-subtitle">
+          Plan your subjects with a daily schedule and a weekly timetable.
+        </div>
+
+        <div class="study-layout">
+          <!-- LEFT: OVERVIEW -->
+          <aside class="study-sidebar">
+            <div class="card-inner-title">OVERVIEW</div>
+
+            <div id="study-summary" class="study-summary">
+              0 subjects · 0 sessions this week
+            </div>
+
+            <div class="study-today-meta">
+              <div class="label">Today</div>
+              <div id="study-today-label" class="value">--</div>
+            </div>
+
+            <div class="study-hint">
+              Tip: Create fixed slots for important subjects (DSA, C, Maths) and keep them
+              consistent every week.
+            </div>
+
+            <!-- ===== DAY PLANNER ===== -->
+<div class="day-planner">
+  <div class="card-inner-title">DAY PLANNER</div>
+
+  <input
+    type="text"
+    id="dayTaskTitle"
+    placeholder="What will you study today?"
+  />
+
+  <div class="time-row">
+    <input type="time" id="dayStartTime" />
+    <input type="time" id="dayEndTime" />
+  </div>
+
+  <button
+    type="button"
+    class="primary-btn"
+    onclick="addDayStudyTask()"
+  >
+    + ADD TODAY TASK
+  </button>
+
+  <h4 class="sub-title">TODAY'S DAY TASKS</h4>
+  <ul id="dayTaskList" class="day-task-list"></ul>
+</div>
+          </aside>
+
+          <!-- RIGHT: FORM + TIMETABLE -->
+          <section class="study-main">
+            <!-- ADD SESSION FORM -->
+            <div class="study-form">
+              <div class="card-inner-title">ADD STUDY SESSION</div>
+
+              <div class="study-form-grid">
+                <div class="field">
+                  <label>Subject</label>
+                  <input id="study-subject" type="text" placeholder="e.g., DSA – Trees, C Programming, Maths" />
+                </div>
+
+                <div class="field">
+                  <label>Type</label>
+                  <select id="study-type">
+                    <option value="Self-study" selected>Self-study</option>
+                    <option value="Lecture">Lecture</option>
+                    <option value="Revision">Revision</option>
+                    <option value="Practice">Practice</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Day of Week</label>
+                  <select id="study-day">
+                    <option value="1">Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                    <option value="0">Sunday</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Start Time</label>
+                  <input id="study-start" type="time" />
+                </div>
+
+                <div class="field">
+                  <label>End Time</label>
+                  <input id="study-end" type="time" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Notes</label>
+                <textarea
+                  id="study-notes"
+                  rows="2"
+                  placeholder="Chapters, topics, video links, question sets..."
+                ></textarea>
+              </div>
+
+              <div class="study-form-actions">
+                <button id="study-save-btn" class="primary" type="button">
+                  + ADD SESSION
+                </button>
+                <button id="study-clear-btn" class="ghost" type="button">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div class="divider subtle"></div>
+
+            <!-- TODAY'S PLAN -->
+            <div class="study-today-section">
+              <div class="card-inner-title">TODAY'S PLAN</div>
+              <div id="study-today-empty" class="study-empty">
+                No sessions planned for today yet.
+              </div>
+              <div id="study-today-list" class="study-today-list"></div>
+            </div>
+
+            <div class="divider subtle"></div>
+
+            <!-- WEEKLY TIMETABLE -->
+            <div class="card-inner-title">WEEKLY TIMETABLE</div>
+            <div class="study-timetable-wrapper">
+              <div class="timetable-header-row">
+                <div class="timetable-header-cell time-col">Time</div>
+                <div class="timetable-header-cell">Mon</div>
+                <div class="timetable-header-cell">Tue</div>
+                <div class="timetable-header-cell">Wed</div>
+                <div class="timetable-header-cell">Thu</div>
+                <div class="timetable-header-cell">Fri</div>
+                <div class="timetable-header-cell">Sat</div>
+                <div class="timetable-header-cell">Sun</div>
+              </div>
+
+              <div class="timetable-body" id="timetable-body">
+                <!-- dynamically filled -->
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- CLOCK ---------- */
+   let lastDateKey = null;
+
+function updateClock() {
+  const timeEl = document.getElementById("hud-clock");
+  const dateEl = document.getElementById("hud-date");
+  const dayEl  = document.getElementById("hud-day");
+  const dateWrap = document.querySelector(".hud-date");
+
+  if (!timeEl || !dateEl || !dayEl || !dateWrap) return;
+
+  const now = new Date();
+
+  /* ---------- TIME ---------- */
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  timeEl.textContent = `${h}:${m}:${s}`;
+
+  /* ---------- DATE ---------- */
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const todayKey = `${dd}-${mm}-${yyyy}`;
+
+  /* ---------- MIDNIGHT FADE ---------- */
+  if (lastDateKey && lastDateKey !== todayKey) {
+    dateWrap.classList.remove("show");
+    dateWrap.classList.add("fade");
+
+    setTimeout(() => {
+      dateEl.textContent = todayKey;
+      dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+      dateWrap.classList.remove("fade");
+      dateWrap.classList.add("show");
+    }, 600);
+  } else {
+    dateEl.textContent = todayKey;
+    dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+    dateWrap.classList.add("show");
+  }
+
+  lastDateKey = todayKey;
+
+  /* ---------- WEEKEND COLOR LOGIC ---------- */
+  dateWrap.classList.remove("weekday", "saturday", "sunday");
+
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  if (day === 0) {
+    dateWrap.classList.add("sunday");
+  } else if (day === 6) {
+    dateWrap.classList.add("saturday");
+  } else {
+    dateWrap.classList.add("weekday");
+  }
+}
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    /* ---------- CLOSE TO HUD ---------- */
+   function closePanel() {
+  playJarvisSound("panelClose");
+
+  const card = document.querySelector(".card");
+  if (card) {
+    card.style.transform = "scale(0.92)";
+    card.style.opacity = "0";
+    card.style.transition = "0.25s ease";
+  }
+
+  // ⏱️ Wait for sound + animation
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 350); // 👈 IMPORTANT
+}
+    /* ---------- STUDY DB (IndexedDB) ---------- */
+
+    const STUDY_DB_NAME = "jarvisStudyV1";
+    const STUDY_DB_VERSION = 1;
+    const STUDY_STORE = "studySessions";
+
+    let studyDb = null;
+
+    async function openStudyDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(STUDY_DB_NAME, STUDY_DB_VERSION);
+
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STUDY_STORE)) {
+            const store = db.createObjectStore(STUDY_STORE, {
+              keyPath: "id",
+              autoIncrement: true
+            });
+            store.createIndex("dayOfWeek", "dayOfWeek", { unique: false });
+          }
+        };
+
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function getAllSessions() {
+      const tx = studyDb.transaction(STUDY_STORE, "readonly");
+      const store = tx.objectStore(STUDY_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function addSession(session) {
+      const tx = studyDb.transaction(STUDY_STORE, "readwrite");
+      const store = tx.objectStore(STUDY_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.add(session);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function deleteSession(id) {
+      const tx = studyDb.transaction(STUDY_STORE, "readwrite");
+      const store = tx.objectStore(STUDY_STORE);
+      return new Promise((resolve, reject) => {
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    /* ---------- HELPERS ---------- */
+
+    function formatTimeRange(start, end) {
+      if (!start && !end) return "";
+      if (!start) return `– ${end}`;
+      if (!end) return `${start} –`;
+      return `${start} – ${end}`;
+    }
+
+    function dayNameFromIndex(idx) {
+      const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      return names[idx] || "--";
+    }
+
+    function getTodayIndex() {
+      return new Date().getDay(); // 0=Sunday..6=Saturday
+    }
+
+    /* ---------- RENDER ---------- */
+
+    async function renderStudy() {
+      const sessions = await getAllSessions();
+
+      const summaryEl = document.getElementById("study-summary");
+      const todayLabelEl = document.getElementById("study-today-label");
+
+      const uniqueSubjects = new Set(
+        sessions.map(s => s.subject.trim()).filter(Boolean)
+      );
+      summaryEl.textContent = `${uniqueSubjects.size} subjects · ${sessions.length} sessions this week`;
+
+      const todayIdx = getTodayIndex();
+      todayLabelEl.textContent = dayNameFromIndex(todayIdx);
+
+      renderTodaySessions(sessions, todayIdx);
+      renderTimetable(sessions);
+    }
+
+    function renderTodaySessions(sessions, todayIdx) {
+      const todayList = document.getElementById("study-today-list");
+      const todayEmpty = document.getElementById("study-today-empty");
+
+      const todaySessions = sessions
+        .filter(s => Number(s.dayOfWeek) === todayIdx)
+        .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+
+      todayList.innerHTML = "";
+
+      if (!todaySessions.length) {
+        todayEmpty.style.display = "block";
+        return;
+      }
+      todayEmpty.style.display = "none";
+
+      todaySessions.forEach(session => {
+        const row = document.createElement("div");
+        row.className = "study-today-row";
+
+        const left = document.createElement("div");
+        left.className = "study-today-left";
+
+        const title = document.createElement("div");
+        title.className = "study-today-subject";
+        title.textContent = session.subject || "(No subject)";
+
+        const meta = document.createElement("div");
+        meta.className = "study-today-meta-text";
+        const timeStr = formatTimeRange(session.startTime, session.endTime);
+        meta.textContent = `${session.type || "Session"}${timeStr ? " • " + timeStr : ""}`;
+
+        left.appendChild(title);
+        left.appendChild(meta);
+
+        const right = document.createElement("div");
+        right.className = "study-today-right";
+
+        const notesIcon = document.createElement("span");
+        if (session.notes) {
+          notesIcon.className = "study-notes-indicator";
+          notesIcon.title = session.notes;
+          notesIcon.textContent = "✎";
+          right.appendChild(notesIcon);
+        }
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "small-btn";
+        delBtn.textContent = "Delete";
+        delBtn.onclick = async () => {
+          if (confirm("Delete this study session?")) {
+            await deleteSession(session.id);
+            renderStudy();
+          }
+        };
+
+        right.appendChild(delBtn);
+
+        row.appendChild(left);
+        row.appendChild(right);
+        todayList.appendChild(row);
+      });
+    }
+
+    function renderTimetable(sessions) {
+      const body = document.getElementById("timetable-body");
+      body.innerHTML = "";
+
+      // Group sessions by day
+      const days = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+      sessions.forEach(s => {
+        const d = Number(s.dayOfWeek);
+        if (!days[d]) days[d] = [];
+        days[d].push(s);
+      });
+
+      Object.keys(days).forEach(key => {
+        days[key].sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+      });
+
+      // We'll show each row as a "time band" with sessions stacked by day
+      // For simplicity, we don't create a strict time grid, just stacked cards.
+      const maxRows = Math.max(
+        days[1].length,
+        days[2].length,
+        days[3].length,
+        days[4].length,
+        days[5].length,
+        days[6].length,
+        days[0].length
+      );
+
+      if (maxRows === 0) {
+        const emptyRow = document.createElement("div");
+        emptyRow.className = "timetable-empty";
+        emptyRow.textContent = "No sessions yet. Add a study session to see it on the timetable.";
+        body.appendChild(emptyRow);
+        return;
+      }
+
+      for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
+        const row = document.createElement("div");
+        row.className = "timetable-row";
+
+        // Time column = just label row number, or best guess
+        const timeCell = document.createElement("div");
+        timeCell.className = "timetable-cell time-col";
+        timeCell.textContent = `#${rowIndex + 1}`;
+        row.appendChild(timeCell);
+
+        const orderDays = [1,2,3,4,5,6,0]; // Mon..Sun
+
+        orderDays.forEach(dayIdx => {
+          const cell = document.createElement("div");
+          cell.className = "timetable-cell";
+
+          const ses = days[dayIdx][rowIndex];
+          if (ses) {
+            const chip = document.createElement("div");
+            chip.className = "timetable-session-chip";
+
+            const subj = document.createElement("div");
+            subj.className = "timetable-session-subject";
+            subj.textContent = ses.subject || "(No subject)";
+
+            const meta = document.createElement("div");
+            meta.className = "timetable-session-meta";
+            const timeStr = formatTimeRange(ses.startTime, ses.endTime);
+            meta.textContent = `${ses.type || "Session"}${timeStr ? " • " + timeStr : ""}`;
+
+            const actions = document.createElement("div");
+            actions.className = "timetable-session-actions";
+
+            if (ses.notes) {
+              const notesIcon = document.createElement("span");
+              notesIcon.className = "study-notes-indicator";
+              notesIcon.title = ses.notes;
+              notesIcon.textContent = "✎";
+              actions.appendChild(notesIcon);
+            }
+
+            const delBtn = document.createElement("button");
+            delBtn.className = "small-btn tiny";
+            delBtn.textContent = "×";
+            delBtn.title = "Delete session";
+            delBtn.onclick = async () => {
+              if (confirm("Delete this study session?")) {
+                await deleteSession(ses.id);
+                renderStudy();
+              }
+            };
+
+            actions.appendChild(delBtn);
+
+            chip.appendChild(subj);
+            chip.appendChild(meta);
+            chip.appendChild(actions);
+            cell.appendChild(chip);
+          }
+
+          row.appendChild(cell);
+        });
+
+        body.appendChild(row);
+      }
+    }
+
+    /* ---------- FORM HANDLERS ---------- */
+
+    function clearStudyForm() {
+      document.getElementById("study-subject").value = "";
+      document.getElementById("study-type").value = "Self-study";
+      document.getElementById("study-day").value = "1";
+      document.getElementById("study-start").value = "";
+      document.getElementById("study-end").value = "";
+      document.getElementById("study-notes").value = "";
+    }
+
+    async function initStudy() {
+      try {
+        studyDb = await openStudyDB();
+        await renderStudy();
+      } catch (err) {
+        console.error("Error opening study DB:", err);
+      }
+
+      document.getElementById("study-save-btn").addEventListener("click", async () => {
+        const subject = document.getElementById("study-subject").value.trim();
+        const type = document.getElementById("study-type").value;
+        const dayOfWeek = document.getElementById("study-day").value;
+        const startTime = document.getElementById("study-start").value;
+        const endTime = document.getElementById("study-end").value;
+        const notes = document.getElementById("study-notes").value.trim();
+
+        if (!subject) {
+          alert("Please enter a subject.");
+          return;
+        }
+
+        const session = {
+          subject,
+          type,
+          dayOfWeek: Number(dayOfWeek),
+          startTime,
+          endTime,
+          notes,
+          createdAt: Date.now()
+        };
+
+        await addSession(session);
+        clearStudyForm();
+        renderStudy();
+      });
+
+      document.getElementById("study-clear-btn").addEventListener("click", clearStudyForm);
+    }
+
+    document.addEventListener("DOMContentLoaded", initStudy);
+  </script>
+
+  <script src="sounds.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  playJarvisSound("open");
+});
+
+let dayTasks = JSON.parse(localStorage.getItem("dayTasks") || "[]");
+
+function saveDayTasks() {
+  localStorage.setItem("dayTasks", JSON.stringify(dayTasks));
+}
+
+function addDayStudyTask() {
+  const title = document.getElementById("dayTaskTitle").value.trim();
+  const start = document.getElementById("dayStartTime").value;
+  const end = document.getElementById("dayEndTime").value;
+
+  if (!title || !start || !end) {
+    alert("Please enter task, start time and end time");
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+
+dayTasks.push({
+  id: Date.now(),
+  title,
+  start,
+  end,
+  date: today,   // 🔗 calendar link
+  done: false
+});
+
+
+  saveDayTasks();
+  renderDayTasks();
+
+  document.getElementById("dayTaskTitle").value = "";
+  document.getElementById("dayStartTime").value = "";
+  document.getElementById("dayEndTime").value = "";
+
+renderDayTasks();
+}
+
+function renderDayTasks() {
+  const list = document.getElementById("dayTaskList");
+  if (!list) return;
+
+  const today = new Date().toISOString().split("T")[0];
+  const dayTasks = JSON.parse(localStorage.getItem("dayTasks") || "[]");
+
+  list.innerHTML = "";
+
+  dayTasks
+    .filter(t => t.date === today)
+    .forEach(task => {
+      const row = document.createElement("div");
+      row.className = "day-task";
+
+      row.innerHTML = `
+        <input type="checkbox" ${task.done ? "checked" : ""}/>
+        <div class="task-body">
+          <div class="task-text">${task.title}</div>
+          <div class="task-time">${task.start} – ${task.end}</div>
+        </div>
+        <button class="delete-btn">✕</button>
+      `;
+
+      row.querySelector("input").onchange = e => {
+        task.done = e.target.checked;
+        saveDayTasks(dayTasks);
+      };
+
+      row.querySelector(".delete-btn").onclick = () => {
+        const updated = dayTasks.filter(t => t.id !== task.id);
+        saveDayTasks(updated);
+        renderDayTasks();
+      };
+
+      list.appendChild(row);
+    });
+}
+
+function saveDayTasks(tasks) {
+  localStorage.setItem("dayTasks", JSON.stringify(tasks));
+}
+
+document.addEventListener("DOMContentLoaded", renderDayTasks);
+
+
+
+</script>
+
+</body>
+</html>

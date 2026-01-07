@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>J.A.R.V.I.S – Calendar</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <a href="index.html">J.A.R.V.I.S</a>
+      <div class="logo-underline"></div>
+    </div>
+
+    <div class="hud-clock-wrapper">
+  <div class="hud-clock" id="hud-clock">--:--:--</div>
+  <div class="hud-date">
+    <div id="hud-date">--.--.----</div>
+    <div id="hud-day">----</div>
+  </div>
+</div>
+
+
+    <div class="status">
+      <div class="status-line">
+        <span class="status-dot"></span>
+        <span class="status-text">Hello · Welcome, Ajith</span>
+      </div>
+
+      <div class="workspace-logo">
+        <span class="workspace-main">AJITH WORKSPACE</span>
+        <span class="workspace-sub"></span>
+        <span class="workspace-arrow"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-inner">
+      <!-- click top bar to go back -->
+      <div class="panel-header" onclick="closePanel()">◉ CALENDAR MODULE</div>
+
+      <div class="card">
+        <div class="section-title">TIMELINE</div>
+        <div class="section-subtitle">
+          Central view of your due dates, study plan and custom events. Click any date to see what J.A.R.V.I.S has scheduled.
+        </div>
+
+        <div class="calendar-layout">
+          <!-- CALENDAR -->
+          <section class="calendar-main">
+            <div class="calendar-header">
+              <button class="nav-btn" id="cal-prev">&lt;</button>
+              <div class="calendar-title" id="calendar-title">Month YYYY</div>
+              <button class="nav-btn" id="cal-next">&gt;</button>
+            </div>
+
+            <div class="calendar-grid">
+              <div class="calendar-weekday">Mon</div>
+              <div class="calendar-weekday">Tue</div>
+              <div class="calendar-weekday">Wed</div>
+              <div class="calendar-weekday">Thu</div>
+              <div class="calendar-weekday">Fri</div>
+              <div class="calendar-weekday">Sat</div>
+              <div class="calendar-weekday">Sun</div>
+
+              <div id="calendar-days" class="calendar-days"></div>
+            </div>
+          </section>
+
+          <!-- DETAILS UNDER CALENDAR -->
+          <section class="calendar-details">
+            <div class="calendar-selected-date" id="selected-date-label">
+              Select a date to see details.
+            </div>
+
+            <div class="calendar-detail-grid">
+              <!-- TASKS COLUMN -->
+              <div class="detail-column calendar-task-graph-split">
+
+  <!-- LEFT: TASKS -->
+  <div class="calendar-tasks-half">
+    <div class="card-inner-title">TASKS ON THIS DAY</div>
+
+    <div id="calendar-tasks-empty" class="cal-empty">
+      No tasks due on this date.
+    </div>
+
+    <div id="calendar-tasks-list" class="cal-list"></div>
+  </div>
+
+  <!-- RIGHT: WORK GRAPH -->
+  <div class="calendar-graph-half">
+    <div class="card-inner-title">WORK TIME</div>
+    <canvas id="calendar-timer-graph" width="240" height="140"></canvas>
+  </div>
+
+</div>
+
+
+
+              <!-- STUDY + EVENTS COLUMN -->
+              <div class="detail-column">
+                <div class="card-inner-title">STUDY PLAN ON THIS DAY</div>
+                <div id="calendar-study-empty" class="cal-empty">
+                  No study sessions mapped to this date.
+                </div>
+                <div id="calendar-study-list" class="cal-list"></div>
+
+                <div class="divider subtle" style="margin:6px 0;"></div>
+
+                <div class="card-inner-title small-title">EVENTS ON THIS DAY</div>
+
+                <div class="event-add-row">
+                  <input
+                    id="event-title"
+                    type="text"
+                    class="event-input"
+                    placeholder="e.g., Exam, Project review, Birthday..."
+                  />
+                  <input id="event-time" type="time" class="event-input time" />
+                  <button id="event-add-btn" class="small-btn">
+                    + ADD EVENT
+                  </button>
+                </div>
+
+                <div id="calendar-events-empty" class="cal-empty">
+                  No events added for this date yet.
+                </div>
+                <div id="calendar-events-list" class="cal-list"></div>
+              </div>
+            </div>
+
+            <div class="calendar-hint">
+              • Tasks use their <strong>due date</strong>.<br />
+              • Study sessions repeat <strong>weekly</strong> based on the day of week in your Study module.<br />
+              • Events are stored directly in this Calendar and can be anything you want.
+            </div>
+          </section>
+
+          <div class="calendar-section">
+  <div class="section-title">DAY PLANNER</div>
+  <div id="calendar-day-planner-list"></div>
+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sounds.js"></script>
+
+
+  <script>
+    /* ---------- CLOCK ---------- */
+  let lastDateKey = null;
+
+function updateClock() {
+  const timeEl = document.getElementById("hud-clock");
+  const dateEl = document.getElementById("hud-date");
+  const dayEl  = document.getElementById("hud-day");
+  const dateWrap = document.querySelector(".hud-date");
+
+  if (!timeEl || !dateEl || !dayEl || !dateWrap) return;
+
+  const now = new Date();
+
+  /* ---------- TIME ---------- */
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  timeEl.textContent = `${h}:${m}:${s}`;
+
+  /* ---------- DATE ---------- */
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const todayKey = `${dd}-${mm}-${yyyy}`;
+
+  /* ---------- MIDNIGHT FADE ---------- */
+  if (lastDateKey && lastDateKey !== todayKey) {
+    dateWrap.classList.remove("show");
+    dateWrap.classList.add("fade");
+
+    setTimeout(() => {
+      dateEl.textContent = todayKey;
+      dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+      dateWrap.classList.remove("fade");
+      dateWrap.classList.add("show");
+    }, 600);
+  } else {
+    dateEl.textContent = todayKey;
+    dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+    dateWrap.classList.add("show");
+  }
+
+  lastDateKey = todayKey;
+
+  /* ---------- WEEKEND COLOR LOGIC ---------- */
+  dateWrap.classList.remove("weekday", "saturday", "sunday");
+
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  if (day === 0) {
+    dateWrap.classList.add("sunday");
+  } else if (day === 6) {
+    dateWrap.classList.add("saturday");
+  } else {
+    dateWrap.classList.add("weekday");
+  }
+}
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+  /* ---------- CLOSE TO HUD ---------- */
+  function closePanel() {
+  playJarvisSound("panelClose");
+
+  const card = document.querySelector(".card");
+  if (card) {
+    card.style.transform = "scale(0.92)";
+    card.style.opacity = "0";
+    card.style.transition = "0.25s ease";
+  }
+
+  // ⏱️ Wait for sound + animation
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 350); // 👈 IMPORTANT
+}
+
+
+    /* ---------- DB CONSTANTS (reuse from Tasks & Study + new Events DB) ---------- */
+
+    const TASK_DB_NAME = "jarvisTasksV1";
+    const TASK_DB_VERSION = 1;
+    const TASK_STORE = "tasks";
+
+    const STUDY_DB_NAME = "jarvisStudyV1";
+    const STUDY_DB_VERSION = 1;
+    const STUDY_STORE = "studySessions";
+
+    const EVENT_DB_NAME = "jarvisEventsV1";
+    const EVENT_DB_VERSION = 1;
+    const EVENT_STORE = "events";
+
+    let taskDb = null;
+    let studyDb = null;
+    let eventDb = null;
+
+    /* ---------- OPEN DBS ---------- */
+
+    function openTaskDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(TASK_DB_NAME, TASK_DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(TASK_STORE)) {
+            const store = db.createObjectStore(TASK_STORE, {
+              keyPath: "id",
+              autoIncrement: true
+            });
+            store.createIndex("done", "done", { unique: false });
+            store.createIndex("dueDate", "dueDate", { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function openStudyDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(STUDY_DB_NAME, STUDY_DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STUDY_STORE)) {
+            const store = db.createObjectStore(STUDY_STORE, {
+              keyPath: "id",
+              autoIncrement: true
+            });
+            store.createIndex("dayOfWeek", "dayOfWeek", { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function openEventDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(EVENT_DB_NAME, EVENT_DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(EVENT_STORE)) {
+            db.createObjectStore(EVENT_STORE, {
+              keyPath: "id",
+              autoIncrement: true
+            });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function getAllTasks() {
+      return new Promise((resolve, reject) => {
+        const tx = taskDb.transaction(TASK_STORE, "readonly");
+        const store = tx.objectStore(TASK_STORE);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function getAllSessions() {
+      return new Promise((resolve, reject) => {
+        const tx = studyDb.transaction(STUDY_STORE, "readonly");
+        const store = tx.objectStore(STUDY_STORE);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function getAllEvents() {
+      return new Promise((resolve, reject) => {
+        const tx = eventDb.transaction(EVENT_STORE, "readonly");
+        const store = tx.objectStore(EVENT_STORE);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function addEventRecord(event) {
+      return new Promise((resolve, reject) => {
+        const tx = eventDb.transaction(EVENT_STORE, "readwrite");
+        const store = tx.objectStore(EVENT_STORE);
+        const req = store.add(event);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function deleteEventRecord(id) {
+      return new Promise((resolve, reject) => {
+        const tx = eventDb.transaction(EVENT_STORE, "readwrite");
+        const store = tx.objectStore(EVENT_STORE);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    /* ---------- CALENDAR STATE ---------- */
+
+    let currentYear, currentMonth; // month 0-11
+    let cachedTasks = [];
+    let cachedSessions = [];
+    let cachedEvents = [];
+    let selectedDateStr = null; // "YYYY-MM-DD"
+
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function formatDateLabel(dateStr) {
+      const d = new Date(dateStr);
+      const opts = { weekday: "long", year: "numeric", month: "short", day: "numeric" };
+      return d.toLocaleDateString(undefined, opts);
+    }
+
+    function buildDateStr(year, month, day) {
+      return `${year}-${pad2(month + 1)}-${pad2(day)}`;
+    }
+
+    /* ---------- CALENDAR RENDER ---------- */
+
+    function renderCalendarGrid() {
+      const titleEl = document.getElementById("calendar-title");
+      const daysEl = document.getElementById("calendar-days");
+      if (!titleEl || !daysEl) return;
+
+      const display = new Date(currentYear, currentMonth, 1);
+      const monthName = display.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      titleEl.textContent = monthName;
+
+      daysEl.innerHTML = "";
+
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      let startWeekday = firstDay.getDay(); // 0=Sun..6=Sat
+      startWeekday = (startWeekday + 6) % 7; // Mon-based
+
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      // blanks
+      for (let i = 0; i < startWeekday; i++) {
+        const blank = document.createElement("div");
+        blank.className = "calendar-day blank";
+        daysEl.appendChild(blank);
+      }
+
+      const today = new Date();
+      const todayStr = buildDateStr(today.getFullYear(), today.getMonth(), today.getDate());
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement("button");
+        cell.className = "calendar-day";
+        const dateStr = buildDateStr(currentYear, currentMonth, day);
+        cell.dataset.date = dateStr;
+
+        const label = document.createElement("div");
+        label.className = "calendar-day-number";
+        label.textContent = day;
+        cell.appendChild(label);
+
+        const hasTasks = cachedTasks.some(t => t.dueDate === dateStr);
+        const weekday = new Date(dateStr).getDay();
+        const hasStudy = cachedSessions.some(s => Number(s.dayOfWeek) === weekday);
+        const hasEvents = cachedEvents.some(e => e.date === dateStr);
+
+        if (hasTasks || hasStudy || hasEvents) {
+          const dots = document.createElement("div");
+          dots.className = "calendar-dots";
+
+          if (hasTasks) {
+            const tDot = document.createElement("span");
+            tDot.className = "dot tasks-dot";
+            dots.appendChild(tDot);
+          }
+          if (hasStudy) {
+            const sDot = document.createElement("span");
+            sDot.className = "dot study-dot";
+            dots.appendChild(sDot);
+          }
+          if (hasEvents) {
+            const eDot = document.createElement("span");
+            eDot.className = "dot event-dot";
+            dots.appendChild(eDot);
+          }
+
+          cell.appendChild(dots);
+        }
+
+        if (dateStr === todayStr) {
+          cell.classList.add("today");
+        }
+        if (selectedDateStr === dateStr) {
+          cell.classList.add("selected");
+        }
+
+        cell.addEventListener("click", () => {
+  selectedDateStr = dateStr;
+  renderCalendarGrid();
+  renderDayDetails();
+  renderDayPlannerForDate(dateStr); // ← ADD THIS LINE
+  drawCalendarTimerGraph(dateStr);
+});
+
+        daysEl.appendChild(cell);
+      }
+    }
+
+    /* ---------- DAY DETAILS RENDER ---------- */
+
+    function renderDayDetails() {
+      const labelEl = document.getElementById("selected-date-label");
+      const tasksListEl = document.getElementById("calendar-tasks-list");
+      const tasksEmptyEl = document.getElementById("calendar-tasks-empty");
+      const studyListEl = document.getElementById("calendar-study-list");
+      const studyEmptyEl = document.getElementById("calendar-study-empty");
+      const eventsListEl = document.getElementById("calendar-events-list");
+      const eventsEmptyEl = document.getElementById("calendar-events-empty");
+
+      if (!selectedDateStr) {
+        labelEl.textContent = "Select a date to see details.";
+        tasksListEl.innerHTML = "";
+        studyListEl.innerHTML = "";
+        eventsListEl.innerHTML = "";
+        tasksEmptyEl.style.display = "block";
+        studyEmptyEl.style.display = "block";
+        eventsEmptyEl.style.display = "block";
+        return;
+      }
+
+      labelEl.textContent = formatDateLabel(selectedDateStr);
+
+      // TASKS
+      const tasks = cachedTasks
+        .filter(t => t.dueDate === selectedDateStr)
+        .sort((a, b) => (a.priority || "").localeCompare(b.priority || ""));
+
+      tasksListEl.innerHTML = "";
+      if (!tasks.length) {
+        tasksEmptyEl.style.display = "block";
+      } else {
+        tasksEmptyEl.style.display = "none";
+        tasks.forEach(t => {
+          const row = document.createElement("div");
+          row.className = "cal-row";
+
+          const left = document.createElement("div");
+          left.className = "cal-row-left";
+
+          const title = document.createElement("div");
+          title.className = "cal-task-title";
+          title.textContent = t.title || "(No title)";
+
+          const meta = document.createElement("div");
+          meta.className = "cal-row-meta";
+          const cat = t.category || "General";
+          const status = t.done ? "Completed" : "Pending";
+          meta.textContent = `${cat} • ${status}`;
+
+          left.appendChild(title);
+          left.appendChild(meta);
+
+          const right = document.createElement("div");
+          right.className = "cal-row-right";
+
+          const priority = document.createElement("span");
+          priority.className = "priority-pill " + (t.priority || "medium");
+          priority.textContent =
+            t.priority === "high" ? "High" :
+            t.priority === "low" ? "Low" : "Medium";
+
+          right.appendChild(priority);
+          row.appendChild(left);
+          row.appendChild(right);
+
+          tasksListEl.appendChild(row);
+        });
+      }
+
+      // STUDY
+      const day = new Date(selectedDateStr).getDay(); // 0=Sun..6=Sat
+      const sessions = cachedSessions
+        .filter(s => Number(s.dayOfWeek) === day)
+        .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+
+      studyListEl.innerHTML = "";
+      if (!sessions.length) {
+        studyEmptyEl.style.display = "block";
+      } else {
+        studyEmptyEl.style.display = "none";
+        sessions.forEach(s => {
+          const row = document.createElement("div");
+          row.className = "cal-row";
+
+          const left = document.createElement("div");
+          left.className = "cal-row-left";
+
+          const title = document.createElement("div");
+          title.className = "cal-study-title";
+          title.textContent = s.subject || "(No subject)";
+
+          const meta = document.createElement("div");
+          meta.className = "cal-row-meta";
+          const type = s.type || "Session";
+          const time =
+            s.startTime && s.endTime
+              ? `${s.startTime} – ${s.endTime}`
+              : s.startTime
+              ? s.startTime
+              : "";
+          meta.textContent = time ? `${type} • ${time}` : type;
+
+          left.appendChild(title);
+          left.appendChild(meta);
+
+          const right = document.createElement("div");
+          right.className = "cal-row-right";
+          if (s.notes) {
+            const n = document.createElement("span");
+            n.className = "study-notes-indicator";
+            n.title = s.notes;
+            n.textContent = "✎";
+            right.appendChild(n);
+          }
+
+          row.appendChild(left);
+          row.appendChild(right);
+          studyListEl.appendChild(row);
+        });
+      }
+
+      // EVENTS
+      const events = cachedEvents
+        .filter(e => e.date === selectedDateStr)
+        .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+
+      eventsListEl.innerHTML = "";
+      if (!events.length) {
+        eventsEmptyEl.style.display = "block";
+      } else {
+        eventsEmptyEl.style.display = "none";
+        events.forEach(e => {
+          const row = document.createElement("div");
+          row.className = "cal-row";
+
+          const left = document.createElement("div");
+          left.className = "cal-row-left";
+
+          const title = document.createElement("div");
+          title.className = "cal-event-title";
+          title.textContent = e.title || "(No title)";
+
+          const meta = document.createElement("div");
+          meta.className = "cal-row-meta";
+          meta.textContent = e.time ? e.time : "All day event";
+
+          left.appendChild(title);
+          left.appendChild(meta);
+
+          const right = document.createElement("div");
+          right.className = "cal-row-right";
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "small-btn tiny";
+          delBtn.textContent = "×";
+          delBtn.title = "Delete event";
+          delBtn.onclick = async () => {
+            if (confirm("Delete this event?")) {
+              await deleteEventRecord(e.id);
+              cachedEvents = await getAllEvents();
+              renderCalendarGrid();
+              renderDayDetails();
+            }
+          };
+
+          right.appendChild(delBtn);
+          row.appendChild(left);
+          row.appendChild(right);
+
+          eventsListEl.appendChild(row);
+        });
+      }
+    }
+
+    function renderDayPlannerForDate(dateStr) {
+  const container = document.getElementById("calendar-day-planner-list");
+  if (!container) return;
+
+  const allDayTasks = JSON.parse(localStorage.getItem("dayPlannerTasks") || "[]");
+  const todaysTasks = allDayTasks.filter(t => t.date === dateStr);
+
+  container.innerHTML = "";
+
+  if (todaysTasks.length === 0) {
+    container.innerHTML = `<div class="muted">No day planner tasks.</div>`;
+    return;
+  }
+
+  todaysTasks.forEach(task => {
+    const row = document.createElement("div");
+    row.className = "calendar-task-row";
+    row.innerHTML = `
+      <input type="checkbox" ${task.completed ? "checked" : ""} disabled />
+      <span>${task.title}</span>
+      <span>${task.start} – ${task.end}</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+
+    /* ---------- INIT ---------- */
+
+    async function initCalendar() {
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonth = now.getMonth();
+      selectedDateStr = buildDateStr(currentYear, currentMonth, now.getDate());
+
+      try {
+        [taskDb, studyDb, eventDb] = await Promise.all([
+          openTaskDB(),
+          openStudyDB(),
+          openEventDB()
+        ]);
+        [cachedTasks, cachedSessions, cachedEvents] = await Promise.all([
+          getAllTasks(),
+          getAllSessions(),
+          getAllEvents()
+        ]);
+      } catch (err) {
+        console.error("Error opening DBs for calendar:", err);
+      }
+
+      // nav
+      document.getElementById("cal-prev").addEventListener("click", () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        renderCalendarGrid();
+        renderDayDetails();
+      });
+
+      document.getElementById("cal-next").addEventListener("click", () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        renderCalendarGrid();
+        renderDayDetails();
+      });
+
+      // Add event
+      document.getElementById("event-add-btn").addEventListener("click", async () => {
+        const titleInput = document.getElementById("event-title");
+        const timeInput = document.getElementById("event-time");
+
+        const title = titleInput.value.trim();
+        const time = timeInput.value;
+
+        if (!selectedDateStr) {
+          alert("Select a date first.");
+          return;
+        }
+        if (!title) {
+          alert("Please enter an event title.");
+          return;
+        }
+
+        const event = {
+          date: selectedDateStr,
+          title,
+          time,
+          createdAt: Date.now()
+        };
+
+        await addEventRecord(event);
+        cachedEvents = await getAllEvents();
+
+        titleInput.value = "";
+        timeInput.value = "";
+
+        renderCalendarGrid();
+        renderDayDetails();
+      });
+
+      renderCalendarGrid();
+      renderDayDetails();
+    }
+
+    document.addEventListener("DOMContentLoaded", initCalendar);
+
+    function loadDayPlannerTasks(date) {
+  const container = document.getElementById("calendar-day-tasks");
+  if (!container) return;
+
+  const tasks = JSON.parse(localStorage.getItem("dayTasks") || "[]");
+  const filtered = tasks.filter(t => t.date === date);
+
+  container.innerHTML = "";
+
+  if (filtered.length === 0) {
+    container.innerHTML = "<div class='muted'>No day planner tasks.</div>";
+    return;
+  }
+
+  filtered.forEach(t => {
+    const row = document.createElement("div");
+    row.className = "calendar-task";
+    row.innerHTML = `<span>${t.title}</span><span>${t.start} – ${t.end}</span>`;
+    container.appendChild(row);
+  });
+}
+
+function drawCalendarTimerGraph(dateKey) {
+  const canvas = document.getElementById("calendar-timer-graph");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const key = "jarvis_timer_" + dateKey;
+  const value = Number(localStorage.getItem(key) || 0); // ms
+
+  // ---------- AXIS ----------
+  const paddingLeft = 40;
+  const paddingBottom = 25;
+  const graphHeight = canvas.height - paddingBottom - 10;
+  const graphWidth = canvas.width - paddingLeft - 10;
+
+  ctx.strokeStyle = "#444";
+  ctx.beginPath();
+  ctx.moveTo(paddingLeft, 10);
+  ctx.lineTo(paddingLeft, canvas.height - paddingBottom);
+  ctx.lineTo(canvas.width - 10, canvas.height - paddingBottom);
+  ctx.stroke();
+
+  // ---------- Y SCALE (HH:MM) ----------
+  const maxMinutes = Math.max(Math.ceil(value / 60000), 30);
+  const steps = 4;
+
+  ctx.fillStyle = "#888";
+  ctx.font = "10px sans-serif";
+
+  for (let i = 0; i <= steps; i++) {
+    const y = 10 + (graphHeight / steps) * i;
+    const mins = Math.round((maxMinutes / steps) * (steps - i));
+    const h = String(Math.floor(mins / 60)).padStart(2, "0");
+    const m = String(mins % 60).padStart(2, "0");
+
+    ctx.fillText(`${h}:${m}`, 2, y + 3);
+
+    ctx.strokeStyle = "#222";
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(canvas.width - 10, y);
+    ctx.stroke();
+  }
+
+  // ---------- BAR ----------
+  if (!value) {
+    ctx.fillStyle = "#666";
+    ctx.fillText("No work logged", paddingLeft + 30, canvas.height / 2);
+    return;
+  }
+
+  const minutes = value / 60000;
+  const barHeight = (minutes / maxMinutes) * graphHeight;
+
+  ctx.fillStyle = "#00e5ff";
+  ctx.fillRect(
+    paddingLeft + 40,
+    canvas.height - paddingBottom - barHeight,
+    60,
+    barHeight
+  );
+
+  ctx.fillStyle = "#aaa";
+  ctx.fillText(
+    `${Math.floor(minutes / 60)}h ${Math.round(minutes % 60)}m`,
+    paddingLeft + 35,
+    canvas.height - paddingBottom - barHeight - 6
+  );
+}
+
+  </script>
+</body>
+</html>

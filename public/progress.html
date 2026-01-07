@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>J.A.R.V.I.S – Progress Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- HEADER -->
+  <header>
+    <div class="logo"><a href="index.html">J.A.R.V.I.S</a></div>
+    <div class="hud-clock-wrapper">
+  <div class="hud-clock" id="hud-clock">--:--:--</div>
+  <div class="hud-date">
+    <div id="hud-date">--.--.----</div>
+    <div id="hud-day">----</div>
+  </div>
+</div>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      Progress module · Analytics & performance, Ajith
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-inner">
+      <!-- click top bar to go back -->
+      <div class="panel-header" onclick="closePanel()">◉ PROGRESS MODULE</div>
+
+      <div class="card">
+        <div class="section-title">PROGRESS DASHBOARD</div>
+        <div class="section-subtitle">
+          Overview of your study load, completed tasks, and weekly performance.
+        </div>
+
+        <div class="progress-layout">
+          <!-- LEFT: SUMMARY + STREAK + METER -->
+          <section class="progress-left">
+            <div class="progress-card">
+              <div class="card-inner-title">SUMMARY</div>
+              <div class="stat-grid">
+                <div class="stat-item">
+                  <div class="stat-label">Total tasks</div>
+                  <div class="stat-value" id="stat-total-tasks">0</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Tasks completed</div>
+                  <div class="stat-value" id="stat-done-tasks">0</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Study sessions / week</div>
+                  <div class="stat-value" id="stat-study-sessions">0</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Study hours / week</div>
+                  <div class="stat-value" id="stat-study-hours">0h</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="progress-card">
+              <div class="card-inner-title">PRODUCTIVITY STREAK</div>
+              <div class="streak-row">
+                <div class="streak-main">
+                  <div class="streak-count" id="streak-count">0</div>
+                  <div class="streak-label">days in a row with completed tasks</div>
+                </div>
+              </div>
+
+              <div class="streak-days-row" id="streak-days-row">
+                <!-- filled with last 7 days badges -->
+              </div>
+            </div>
+
+            <div class="progress-card">
+              <div class="card-inner-title">WEEKLY PERFORMANCE</div>
+              <div class="performance-meter">
+                <div class="performance-label">
+                  Combined score based on study hours & completed tasks.
+                </div>
+                <div class="performance-bar">
+                  <div id="performance-fill" class="performance-fill"></div>
+                </div>
+                <div class="performance-score" id="performance-score">0%</div>
+                <div class="performance-footnote">
+                  Target: ~21 study hours + 10 completed tasks per week.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- RIGHT: GRAPHS + SUBJECT PROGRESS -->
+          <section class="progress-right">
+            <div class="progress-card">
+              <div class="card-inner-title">STUDY HOURS PER DAY</div>
+              <div class="mini-graph" id="graph-study-hours">
+                <!-- bars -->
+              </div>
+            </div>
+
+            <div class="progress-card">
+              <div class="card-inner-title">TASKS COMPLETED (LAST 7 DAYS)</div>
+              <div class="mini-graph" id="graph-tasks-per-day">
+                <!-- bars -->
+              </div>
+            </div>
+
+            <div class="progress-card">
+              <div class="card-inner-title">SUBJECT LOAD (WEEKLY)</div>
+              <div id="subject-progress-list" class="subject-progress-list">
+                <!-- subject bars -->
+              </div>
+              <div id="subject-progress-empty" class="subject-progress-empty">
+                No study sessions found yet. Add sessions in the Study module to see subject-wise load.
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="sounds.js"></script>
+
+
+  <script>
+    /* ---------- CLOCK ---------- */
+   let lastDateKey = null;
+
+function updateClock() {
+  const timeEl = document.getElementById("hud-clock");
+  const dateEl = document.getElementById("hud-date");
+  const dayEl  = document.getElementById("hud-day");
+  const dateWrap = document.querySelector(".hud-date");
+
+  if (!timeEl || !dateEl || !dayEl || !dateWrap) return;
+
+  const now = new Date();
+
+  /* ---------- TIME ---------- */
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  timeEl.textContent = `${h}:${m}:${s}`;
+
+  /* ---------- DATE ---------- */
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const todayKey = `${dd}-${mm}-${yyyy}`;
+
+  /* ---------- MIDNIGHT FADE ---------- */
+  if (lastDateKey && lastDateKey !== todayKey) {
+    dateWrap.classList.remove("show");
+    dateWrap.classList.add("fade");
+
+    setTimeout(() => {
+      dateEl.textContent = todayKey;
+      dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+      dateWrap.classList.remove("fade");
+      dateWrap.classList.add("show");
+    }, 600);
+  } else {
+    dateEl.textContent = todayKey;
+    dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+    dateWrap.classList.add("show");
+  }
+
+  lastDateKey = todayKey;
+
+  /* ---------- WEEKEND COLOR LOGIC ---------- */
+  dateWrap.classList.remove("weekday", "saturday", "sunday");
+
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  if (day === 0) {
+    dateWrap.classList.add("sunday");
+  } else if (day === 6) {
+    dateWrap.classList.add("saturday");
+  } else {
+    dateWrap.classList.add("weekday");
+  }
+}
+    updateClock();
+    setInterval(updateClock, 1000);
+
+  /* ---------- CLOSE TO HUD ---------- */
+ function closePanel() {
+  playJarvisSound("panelClose");
+
+  const card = document.querySelector(".card");
+  if (card) {
+    card.style.transform = "scale(0.92)";
+    card.style.opacity = "0";
+    card.style.transition = "0.25s ease";
+  }
+
+  // ⏱️ Wait for sound + animation
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 350); // 👈 IMPORTANT
+}
+
+
+    /* ---------- DB CONSTANTS ---------- */
+
+    // Reuse your existing databases
+    const TASK_DB_NAME = "jarvisTasksV1";
+    const TASK_STORE = "tasks";
+    const TASK_DB_VERSION = 1;
+
+    const STUDY_DB_NAME = "jarvisStudyV1";
+    const STUDY_STORE = "studySessions";
+    const STUDY_DB_VERSION = 1;
+
+    let taskDb = null;
+    let studyDb = null;
+
+    /* ---------- OPEN DBS ---------- */
+
+    function openTaskDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(TASK_DB_NAME, TASK_DB_VERSION);
+        req.onupgradeneeded = () => {
+          // do not change structure here, just ensure store exists
+          const db = req.result;
+          if (!db.objectStoreNames.contains(TASK_STORE)) {
+            const store = db.createObjectStore(TASK_STORE, {
+              keyPath: "id",
+              autoIncrement: true
+            });
+            store.createIndex("done", "done", { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function openStudyDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(STUDY_DB_NAME, STUDY_DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STUDY_STORE)) {
+            const store = db.createObjectStore(STUDY_STORE, {
+              keyPath: "id",
+              autoIncrement: true
+            });
+            store.createIndex("dayOfWeek", "dayOfWeek", { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function getAllTasks() {
+      return new Promise((resolve, reject) => {
+        const tx = taskDb.transaction(TASK_STORE, "readonly");
+        const store = tx.objectStore(TASK_STORE);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function getAllSessions() {
+      return new Promise((resolve, reject) => {
+        const tx = studyDb.transaction(STUDY_STORE, "readonly");
+        const store = tx.objectStore(STUDY_STORE);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    /* ---------- HELPERS ---------- */
+
+    function dayShort(idx) {
+      const names = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      return names[idx] || "?";
+    }
+
+    function minutesBetween(start, end) {
+      if (!start || !end) return 0;
+      const [sh, sm] = start.split(":").map(Number);
+      const [eh, em] = end.split(":").map(Number);
+      if (Number.isNaN(sh) || Number.isNaN(eh)) return 0;
+      let diff = (eh * 60 + em) - (sh * 60 + sm);
+      if (diff < 0) diff = 0;
+      return diff;
+    }
+
+    function dateKey(ts) {
+      const d = new Date(ts);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function lastNDays(n) {
+      const out = [];
+      const today = new Date();
+      for (let i = n - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const key = dateKey(d);
+        out.push({
+          date: d,
+          key,
+          label: dayShort(d.getDay())
+        });
+      }
+      return out;
+    }
+
+    /* ---------- MAIN RENDER ---------- */
+
+    async function renderProgress() {
+      const [tasks, sessions] = await Promise.all([
+        getAllTasks(),
+        getAllSessions()
+      ]);
+
+      // ---------- SUMMARY ----------
+      const totalTasks = tasks.length;
+      const doneTasks = tasks.filter(t => t.done).length;
+
+      const totalSessions = sessions.length;
+
+      let weeklyMinutes = 0;
+      sessions.forEach(s => {
+        weeklyMinutes += minutesBetween(s.startTime, s.endTime);
+      });
+      const weeklyHours = weeklyMinutes / 60;
+
+      document.getElementById("stat-total-tasks").textContent = totalTasks;
+      document.getElementById("stat-done-tasks").textContent = doneTasks;
+      document.getElementById("stat-study-sessions").textContent = totalSessions;
+      document.getElementById("stat-study-hours").textContent = weeklyHours.toFixed(1) + "h";
+
+      // ---------- STUDY HOURS PER DAY (WEEK) ----------
+      const studyMinutesByDay = [0,0,0,0,0,0,0];
+      sessions.forEach(s => {
+        const idx = Number(s.dayOfWeek);
+        if (idx >= 0 && idx <= 6) {
+          studyMinutesByDay[idx] += minutesBetween(s.startTime, s.endTime);
+        }
+      });
+
+      const studyGraphEl = document.getElementById("graph-study-hours");
+      studyGraphEl.innerHTML = "";
+      const maxStudyMin = Math.max(...studyMinutesByDay, 0);
+      const safeMaxStudy = maxStudyMin === 0 ? 60 : maxStudyMin; // avoid /0
+
+      [1,2,3,4,5,6,0].forEach(idx => { // Mon..Sun
+        const mins = studyMinutesByDay[idx];
+        const hours = mins / 60;
+        const pct = Math.round((mins / safeMaxStudy) * 100);
+
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const label = document.createElement("div");
+        label.className = "bar-label";
+        label.textContent = dayShort(idx);
+
+        const barWrap = document.createElement("div");
+        barWrap.className = "bar-wrap";
+
+        const barFill = document.createElement("div");
+        barFill.className = "bar-fill study";
+        barFill.style.width = pct + "%";
+
+        const value = document.createElement("div");
+        value.className = "bar-value";
+        value.textContent = hours > 0 ? hours.toFixed(1) + "h" : "";
+
+        barWrap.appendChild(barFill);
+        row.appendChild(label);
+        row.appendChild(barWrap);
+        row.appendChild(value);
+
+        studyGraphEl.appendChild(row);
+      });
+
+      // ---------- TASKS COMPLETED LAST 7 DAYS ----------
+      const days7 = lastNDays(7);
+      const tasksDoneByDate = {};
+      days7.forEach(d => tasksDoneByDate[d.key] = 0);
+
+      tasks.forEach(t => {
+        if (!t.done) return;
+        if (!t.createdAt) return;
+        const k = dateKey(t.createdAt);
+        if (k in tasksDoneByDate) {
+          tasksDoneByDate[k] += 1;
+        }
+      });
+
+      const tasksGraphEl = document.getElementById("graph-tasks-per-day");
+      tasksGraphEl.innerHTML = "";
+      const maxTasksDay = Math.max(...Object.values(tasksDoneByDate), 0);
+      const safeMaxTasks = maxTasksDay === 0 ? 1 : maxTasksDay;
+
+      let weeklyDoneLast7 = 0;
+
+      days7.forEach(d => {
+        const count = tasksDoneByDate[d.key] || 0;
+        weeklyDoneLast7 += count;
+        const pct = Math.round((count / safeMaxTasks) * 100);
+
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const label = document.createElement("div");
+        label.className = "bar-label";
+        label.textContent = d.label;
+
+        const barWrap = document.createElement("div");
+        barWrap.className = "bar-wrap";
+
+        const barFill = document.createElement("div");
+        barFill.className = "bar-fill tasks";
+        barFill.style.width = pct + "%";
+
+        const value = document.createElement("div");
+        value.className = "bar-value";
+        value.textContent = count > 0 ? String(count) : "";
+
+        barWrap.appendChild(barFill);
+        row.appendChild(label);
+        row.appendChild(barWrap);
+        row.appendChild(value);
+
+        tasksGraphEl.appendChild(row);
+      });
+
+      // ---------- STREAK (from completed tasks) ----------
+      const todayKey = dateKey(Date.now());
+      const doneKeys = new Set(
+        tasks.filter(t => t.done && t.createdAt).map(t => dateKey(t.createdAt))
+      );
+
+      let streak = 0;
+      let cursor = new Date();
+      while (true) {
+        const k = dateKey(cursor);
+        if (doneKeys.has(k)) {
+          streak += 1;
+          cursor.setDate(cursor.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      document.getElementById("streak-count").textContent = streak;
+
+      const streakRowEl = document.getElementById("streak-days-row");
+      streakRowEl.innerHTML = "";
+      const streakDays = lastNDays(7);
+      streakDays.forEach(d => {
+        const badge = document.createElement("div");
+        badge.className = "streak-day-badge";
+        const hasDone = doneKeys.has(d.key);
+        if (hasDone) badge.classList.add("active");
+        if (d.key === todayKey) badge.classList.add("today");
+        badge.textContent = d.label;
+        streakRowEl.appendChild(badge);
+      });
+
+      // ---------- WEEKLY PERFORMANCE ----------
+      // target: ~21 hours study, 10 completed tasks (last 7 days)
+      const studyScore = Math.min(1, weeklyHours / 21);
+      const taskScore = Math.min(1, weeklyDoneLast7 / 10);
+      const combined = 0.5 * studyScore + 0.5 * taskScore;
+      const percent = Math.round(combined * 100);
+
+      const perfFill = document.getElementById("performance-fill");
+      const perfScore = document.getElementById("performance-score");
+
+      perfFill.style.width = percent + "%";
+      perfScore.textContent = percent + "%";
+
+      // ---------- SUBJECT PROGRESS BARS ----------
+      const subjectListEl = document.getElementById("subject-progress-list");
+      const subjectEmptyEl = document.getElementById("subject-progress-empty");
+      subjectListEl.innerHTML = "";
+
+      if (!sessions.length) {
+        subjectEmptyEl.style.display = "block";
+      } else {
+        subjectEmptyEl.style.display = "none";
+
+        const minutesBySubject = {};
+        sessions.forEach(s => {
+          const name = (s.subject || "Unknown").trim();
+          const mins = minutesBetween(s.startTime, s.endTime);
+          if (!minutesBySubject[name]) minutesBySubject[name] = 0;
+          minutesBySubject[name] += mins;
+        });
+
+        const entries = Object.entries(minutesBySubject)
+          .map(([subject, mins]) => ({ subject, mins }))
+          .sort((a, b) => b.mins - a.mins);
+
+        const totalMinutesAll = entries.reduce((sum, e) => sum + e.mins, 0) || 1;
+
+        entries.forEach(e => {
+          const pctSub = Math.round((e.mins / totalMinutesAll) * 100);
+          const hours = e.mins / 60;
+
+          const row = document.createElement("div");
+          row.className = "subject-row";
+
+          const label = document.createElement("div");
+          label.className = "subject-label";
+          label.textContent = e.subject;
+
+          const barWrap = document.createElement("div");
+          barWrap.className = "subject-bar-wrap";
+
+          const barFill = document.createElement("div");
+          barFill.className = "subject-bar-fill";
+          barFill.style.width = pctSub + "%";
+
+          const value = document.createElement("div");
+          value.className = "subject-value";
+          value.textContent = `${hours.toFixed(1)}h • ${pctSub}%`;
+
+          barWrap.appendChild(barFill);
+          row.appendChild(label);
+          row.appendChild(barWrap);
+          row.appendChild(value);
+
+          subjectListEl.appendChild(row);
+        });
+      }
+    }
+
+    /* ---------- INIT ---------- */
+
+    async function initProgress() {
+      try {
+        [taskDb, studyDb] = await Promise.all([
+          openTaskDB(),
+          openStudyDB()
+        ]);
+        await renderProgress();
+      } catch (err) {
+        console.error("Error opening DBs for progress:", err);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", initProgress);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J.A.R.V.I.S HUD</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+  <div class="logo">
+  <a href="index.html">J.A.R.V.I.S</a>
+  <div class="logo-underline"></div>
+</div>
+  <div class="hud-clock-wrapper">
+  <div class="hud-clock" id="hud-clock">--:--:--</div>
+  <div class="hud-date">
+    <div id="hud-date">--.--.----</div>
+    <div id="hud-day">----</div>
+  </div>
+</div>
+
+
+  <div class="status">
+    <div class="status-line">
+      <span class="status-dot"></span>
+      <span class="status-text">Hello · Welcome, Ajith</span>
+    </div>
+
+    <div class="workspace-logo">
+      <span class="workspace-main">AJITH</span>
+      <span class="workspace-sub">WORKSPACE</span>
+      <span class="workspace-arrow"></span>
+    </div>
+  </div>
+</header>
+
+
+  <!-- AUDIO (Startup Voice) -->
+  <!-- If the file doesn't exist, it's fine, it will just fail silently -->
+  <audio id="jarvis-audio" src="jarvis-welcome.mp3"></audio>
+
+  <!-- INTRO SEQUENCE OVERLAY -->
+  <div id="intro-overlay" class="intro-overlay">
+    <div class="intro-content">
+      <div id="intro-text" class="intro-text">WELCOME HOME, AJITH.</div>
+      <div id="intro-jarvis" class="intro-jarvis">J.A.R.V.I.S</div>
+    </div>
+  </div>
+
+  <!-- MAIN HUD STAGE -->
+  <div class="stage">
+
+    <!-- Arc Reactor -->
+    <div class="center-reactor">
+      <div class="reactor-core"></div>
+      <div class="jarvis-text">J.A.R.V.I.S</div>
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+      <div class="hud-ticks"></div>
+      <div class="hud-inner-glow"></div>
+    </div>
+
+    <!-- Side Background Lines -->
+    <div class="hud-lines-left"></div>
+    <div class="hud-lines-right"></div>
+
+    <!-- ===== TIMER (LEFT PANEL STYLE) ===== -->
+<div class="timer-panel" id="timer-panel">
+  <div class="timer-card">
+    <div class="timer-time" id="timer-display">00:00:00</div>
+
+    <div class="timer-actions">
+      <button id="timer-start">Start</button>
+      <button id="timer-pause" disabled>Pause</button>
+      <button id="timer-stop" disabled>Stop</button>
+      <button id="timer-reset">Reset</button>
+    </div>
+
+    <button id="timer-history" class="timer-history-btn">
+  View History
+</button>
+
+<button id="timer-clear-history" class="timer-history-btn danger">
+  Clear Work History
+</button>
+
+
+<div class="timer-graph-tabs hidden" id="timer-graph-tabs">
+  <button data-range="daily" class="active">Daily</button>
+  <button data-range="weekly">Weekly</button>
+  <button data-range="monthly">Monthly</button>
+</div>
+
+
+    <canvas id="timer-graph" width="220" height="90"></canvas>
+  </div>
+</div>
+
+<!-- 🔐 JARVIS LOCK BUTTON -->
+<div id="lock-btn" title="Lock J.A.R.V.I.S">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2v10"
+          stroke="#00e5ff"
+          stroke-width="2.5"
+          stroke-linecap="round"/>
+    <path d="M6.5 5.5a7 7 0 1 0 11 0"
+          stroke="#00e5ff"
+          stroke-width="2.5"
+          stroke-linecap="round"/>
+  </svg>
+</div>
+
+    <!-- 6 Floating HUD Menu Options -->
+    <div class="menu-orbit">
+
+      <a href="tasks.html" class="menu-btn menu-tasks"
+   onclick="playJarvisSound('panelOpen')">
+  <span>TASKS</span>
+  <span class="sub">DAY-TO-DAY</span>
+</a>
+
+<a href="#" class="menu-btn menu-timer" onclick="toggleTimer(); return false;">
+  <span>TIMER</span>
+  <span class="sub">WORK LOG</span>
+</a>
+
+<a href="study.html" class="menu-btn menu-study"
+   onclick="playJarvisSound('panelOpen')">
+  <span>STUDY</span>
+  <span class="sub">PLANNER</span>
+</a>
+
+<a href="progress.html" class="menu-btn menu-progress"
+   onclick="playJarvisSound('panelOpen')">
+  <span>PROGRESS</span>
+  <span class="sub">DAILY LOG</span>
+</a>
+
+<a href="library.html" class="menu-btn menu-library"
+   onclick="playJarvisSound('panelOpen')">
+  <span>LIBRARY</span>
+  <span class="sub">BOOKS & PDFS</span>
+</a>
+
+<a href="calendar.html" class="menu-btn menu-calendar"
+   onclick="playJarvisSound('panelOpen')">
+  <span>CALENDAR</span>
+  <span class="sub">SCHEDULE</span>
+</a>
+
+<a href="jarvis.html" class="menu-btn menu-jarvis"
+   onclick="playJarvisSound('panelOpen')">
+  <span>J.A.R.V.I.S</span>
+  <span class="sub">AI CONSOLE</span>
+</a>
+
+
+    </div><!-- menu-orbit end -->
+
+  </div><!-- stage end -->
+
+  <script src="sounds.js"></script>
+
+
+  <!-- SCRIPT SECTION -->
+  <script>
+    const INTRO_SESSION_KEY = "jarvisIntroShownInThisTab";
+
+    /* ------------------- CLOCK ------------------- */
+   let lastDateKey = null;
+
+function updateClock() {
+  const timeEl = document.getElementById("hud-clock");
+  const dateEl = document.getElementById("hud-date");
+  const dayEl  = document.getElementById("hud-day");
+  const dateWrap = document.querySelector(".hud-date");
+
+  if (!timeEl || !dateEl || !dayEl || !dateWrap) return;
+
+  const now = new Date();
+
+  /* ---------- TIME ---------- */
+  const h = String(now.getHours()).padStart(2, "0");
+  const m = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  timeEl.textContent = `${h}:${m}:${s}`;
+
+  /* ---------- DATE ---------- */
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const todayKey = `${dd}-${mm}-${yyyy}`;
+
+  /* ---------- MIDNIGHT FADE ---------- */
+  if (lastDateKey && lastDateKey !== todayKey) {
+    dateWrap.classList.remove("show");
+    dateWrap.classList.add("fade");
+
+    setTimeout(() => {
+      dateEl.textContent = todayKey;
+      dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+      dateWrap.classList.remove("fade");
+      dateWrap.classList.add("show");
+    }, 600);
+  } else {
+    dateEl.textContent = todayKey;
+    dayEl.textContent = now.toLocaleDateString(undefined, { weekday: "long" });
+    dateWrap.classList.add("show");
+  }
+
+  lastDateKey = todayKey;
+
+  /* ---------- WEEKEND COLOR LOGIC ---------- */
+  dateWrap.classList.remove("weekday", "saturday", "sunday");
+
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  if (day === 0) {
+    dateWrap.classList.add("sunday");
+  } else if (day === 6) {
+    dateWrap.classList.add("saturday");
+  } else {
+    dateWrap.classList.add("weekday");
+  }
+}
+
+    function startClock() {
+      updateClock();
+      setInterval(updateClock, 1000);
+    }
+
+    /* ------------------- SHOW HUD MENU ------------------- */
+    function showMenu() {
+      document.body.classList.add("menu-visible");
+    }
+
+    /* ------------------- INTRO SEQUENCE ------------------- */
+    function startIntro() {
+      const overlay = document.getElementById("intro-overlay");
+      const text    = document.getElementById("intro-text");
+      const logo    = document.getElementById("intro-jarvis");
+      const audio   = document.getElementById("jarvis-audio");
+
+      if (!overlay || !text || !logo) {
+        showMenu();
+        return;
+      }
+
+      // Try to play JARVIS sound
+      if (audio) {
+        try {
+          audio.volume = 1.0;
+          audio.play().catch(() => {});
+        } catch (e) {
+          // ignore audio errors
+        }
+      }
+
+      // Step 1: "WELCOME HOME, AJITH."
+      setTimeout(() => {
+        text.classList.add("visible");
+      }, 200);
+
+      // Step 2: switch to "J.A.R.V.I.S"
+      setTimeout(() => {
+        text.classList.remove("visible");
+        logo.classList.add("visible");
+      }, 2200);
+
+      function finishIntro() {
+        // Remember that intro has been shown in this tab
+        sessionStorage.setItem(INTRO_SESSION_KEY, "true");
+
+        overlay.classList.add("fade-out");
+        setTimeout(() => {
+          overlay.style.display = "none";
+          showMenu(); // show HUD with animations
+        }, 800);
+      }
+
+      // click on J.A.R.V.I.S text
+      logo.addEventListener("click", () => {
+  playJarvisSound("startup");
+  finishIntro();
+}, { once: true });
+
+      // or click anywhere on overlay after JARVIS is visible
+      overlay.addEventListener("click", () => {
+        if (logo.classList.contains("visible")) {
+          finishIntro();
+        }
+      }, { once: true });
+    }
+
+    /* ------------------- STARTUP ------------------- */
+    window.addEventListener("DOMContentLoaded", () => {
+      startClock();
+
+      const overlay = document.getElementById("intro-overlay");
+      const alreadyShown = sessionStorage.getItem(INTRO_SESSION_KEY) === "true";
+
+      if (alreadyShown) {
+        // Same browser tab, intro already done → skip straight to HUD
+        if (overlay) {
+          overlay.style.display = "none";
+        }
+        showMenu();
+      } else {
+        // Fresh open in this tab → play intro
+        startIntro();
+      }
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+  const dateWrap = document.querySelector(".hud-date");
+  if (dateWrap) {
+    dateWrap.classList.add("show");
+  }
+});
+
+document.addEventListener("click", () => {
+  const a = new Audio("sounds/startup.mp3");
+  a.volume = 1;
+  a.play()
+    .then(() => console.log("🔊 SOUND PLAYED"))
+    .catch(err => console.error("❌ AUDIO ERROR", err));
+}, { once: true });
+
+
+/* ================= TIMER LOGIC (FIXED & STABLE) ================= */
+
+// 🧠 Active task attached to timer
+let activeTaskId = null;
+
+// Timer state
+let timerRunning = false;
+let timerPaused = false;
+let timerStartTime = 0;
+let accumulatedTime = 0;
+let timerInterval = null;
+
+// Elements
+const timerPill     = document.querySelector(".timer-pill");
+const timerPanel    = document.getElementById("timer-panel");
+const timerDisplay  = document.getElementById("timer-display");
+const startBtn      = document.getElementById("timer-start");
+const pauseBtn      = document.getElementById("timer-pause");
+const stopBtn       = document.getElementById("timer-stop");
+const resetBtn      = document.getElementById("timer-reset");
+const historyBtn    = document.getElementById("timer-history");
+
+// ---------- DATE KEY (CONSISTENT) ----------
+function getDateKey(date = new Date()) {
+  return date.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+function getTodayKey() {
+  return "jarvis_timer_" + getDateKey();
+}
+
+// ---------- TOGGLE PANEL ----------
+function toggleTimer() {
+  const panel = document.getElementById("timer-panel");
+  if (!panel) return;
+
+  panel.classList.toggle("active");
+  playJarvisSound("panelOpen");
+}
+
+
+// ---------- FORMAT ----------
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+
+  const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  const millis = String(Math.floor((ms % 1000) / 10)).padStart(2, "0");
+
+  return `${hours}:${minutes}:${seconds}.${millis}`;
+}
+
+
+// ---------- UPDATE DISPLAY ----------
+function updateTimer() {
+  const elapsed = Date.now() - timerStartTime + accumulatedTime;
+  timerDisplay.textContent = formatTime(elapsed);
+}
+
+// ---------- START ----------
+startBtn.addEventListener("click", () => {
+  if (timerRunning) return;
+
+  timerRunning = true;
+  timerPaused = false;
+  timerStartTime = Date.now();
+
+  startBtn.disabled = true;
+  pauseBtn.disabled = false;
+  stopBtn.disabled  = false;
+
+  timerInterval = setInterval(updateTimer, 50);
+  playJarvisSound("send");
+});
+
+// ---------- PAUSE ----------
+pauseBtn.addEventListener("click", () => {
+  if (!timerRunning) return;
+
+  accumulatedTime += Date.now() - timerStartTime;
+  clearInterval(timerInterval);
+
+  timerRunning = false;
+  timerPaused = true;
+
+  startBtn.disabled = false;
+  pauseBtn.disabled = true;
+
+  playJarvisSound("panelClose");
+});
+
+// ---------- STOP ----------
+stopBtn.addEventListener("click", () => {
+  if (!timerRunning && !timerPaused) return;
+
+  if (timerRunning) {
+    accumulatedTime += Date.now() - timerStartTime;
+  }
+
+  const key = getTodayKey();
+  const prev = Number(localStorage.getItem(key) || 0);
+  localStorage.setItem(key, prev + accumulatedTime);
+
+  // 🧠 Save per-task time
+  if (activeTaskId) {
+    const taskKey = `jarvis_task_time_${activeTaskId}`;
+    const prevTask = Number(localStorage.getItem(taskKey) || 0);
+    localStorage.setItem(taskKey, prevTask + accumulatedTime);
+  }
+
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerPaused = false;
+  accumulatedTime = 0;
+
+  timerDisplay.textContent = formatTime(prev + accumulatedTime);
+
+  startBtn.disabled = false;
+  pauseBtn.disabled = true;
+  stopBtn.disabled  = true;
+
+  drawDailyGraph();
+  playJarvisSound("panelClose");
+});
+
+// ---------- RESET (NO HISTORY LOSS) ----------
+resetBtn.addEventListener("click", () => {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerPaused = false;
+  accumulatedTime = 0;
+
+  timerDisplay.textContent = "00:00:00";
+
+  startBtn.disabled = false;
+  pauseBtn.disabled = true;
+  stopBtn.disabled  = true;
+
+  playJarvisSound("panelClose");
+});
+
+const clearHistoryBtn = document.getElementById("timer-clear-history");
+
+clearHistoryBtn.addEventListener("click", () => {
+  if (!confirm("Clear all work-time history? This cannot be undone.")) return;
+
+  Object.keys(localStorage)
+    .filter(k => k.startsWith("jarvis_timer_"))
+    .forEach(k => localStorage.removeItem(k));
+
+  timerDisplay.textContent = "00:00:00.00";
+
+  const canvas = document.getElementById("timer-graph");
+  if (canvas) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  playJarvisSound("panelClose");
+});
+
+
+// ---------- ATTACH TIMER TO TASK ----------
+function attachTimerToTask(taskId) {
+  activeTaskId = taskId;
+  console.log("⏱ Timer attached to task:", taskId);
+}
+
+// ---------- LOAD TODAY ----------
+(function loadTodayTime() {
+  const key = getTodayKey();
+  const saved = Number(localStorage.getItem(key) || 0);
+  timerDisplay.textContent = formatTime(saved);
+})();
+
+// ================= GRAPH =================
+
+function drawDailyGraph() {
+  const canvas = document.getElementById("timer-graph");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const days = [];
+  const values = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = "jarvis_timer_" + getDateKey(d);
+    days.push(d.getDate());
+    values.push(Number(localStorage.getItem(key) || 0) / 60000);
+  }
+
+  const max = Math.max(...values, 1);
+  const barWidth = 20;
+  const gap = 10;
+
+  values.forEach((v, i) => {
+    const h = (v / max) * 50;
+    const x = 20 + i * (barWidth + gap);
+    const y = canvas.height - h - 25;
+
+    ctx.fillStyle = "#00e5ff";
+    ctx.fillRect(x, y, barWidth, h);
+
+    ctx.fillStyle = "#aaa";
+    ctx.font = "10px sans-serif";
+    ctx.fillText(days[i], x + 4, canvas.height - 5);
+  });
+}
+
+function sumTimerBetween(days) {
+  let total = 0;
+  for (let i = 0; i < days; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = "jarvis_timer_" + getDateKey(d);
+    total += Number(localStorage.getItem(key) || 0);
+  }
+  return total / 60000; // minutes
+}
+
+function sumTimerBetween(days) {
+  let total = 0;
+  for (let i = 0; i < days; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = "jarvis_timer_" + getDateKey(d);
+    total += Number(localStorage.getItem(key) || 0);
+  }
+  return total / 60000; // minutes
+}
+
+function drawWeeklyGraph() {
+  const canvas = document.getElementById("timer-graph");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const weeks = ["W1", "W2", "W3", "W4"];
+  const values = [];
+
+  for (let i = 3; i >= 0; i--) {
+    values.push(sumTimerBetween(7 * (i + 1)) - sumTimerBetween(7 * i));
+  }
+
+  const max = Math.max(...values, 1);
+
+  values.forEach((v, i) => {
+    const h = (v / max) * 50;
+    const x = 25 + i * 45;
+    ctx.fillStyle = "#00e5ff";
+    ctx.fillRect(x, canvas.height - h - 20, 22, h);
+
+    ctx.fillStyle = "#aaa";
+    ctx.font = "10px sans-serif";
+    ctx.fillText(weeks[i], x, canvas.height - 5);
+  });
+}
+
+
+// ---------- GRAPH TABS ----------
+document.querySelectorAll(".timer-graph-tabs button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".timer-graph-tabs button")
+      .forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const range = btn.dataset.range;
+    if (range === "daily") drawDailyGraph();
+    if (range === "weekly") drawDailyGraph();   // safe fallback
+    if (range === "monthly") drawDailyGraph();  // safe fallback
+  };
+});
+
+const graphTabs = document.getElementById("timer-graph-tabs");
+
+historyBtn.addEventListener("click", () => {
+  graphTabs.classList.toggle("hidden");
+  drawDailyGraph(); // default
+});
+
+
+  </script>
+
+  <script>
+  // ⏱ AUTO LOCK AFTER INACTIVITY (1 min)
+  let inactivityTimer;
+
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(lockJarvis, 60 * 1000); // 1 minute
+  }
+
+  async function lockJarvis() {
+    await fetch("/lock", { method: "POST" });
+    window.location.href = "/login";
+  }
+
+  // Detect activity
+  ["mousemove", "keydown", "click", "touchstart"].forEach(evt => {
+    document.addEventListener(evt, resetInactivityTimer);
+  });
+
+  resetInactivityTimer();
+
+  /* 🔐 MANUAL LOCK BUTTON */
+const lockBtn = document.getElementById("lock-btn");
+
+if (lockBtn) {
+  lockBtn.addEventListener("click", async () => {
+    playJarvisSound("panelClose"); // 🔊 shutdown sound
+    await fetch("/lock", { method: "POST" });
+
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 300);
+  });
+}
+
+
+
+</script>
+
+
+</body>
+</html>
