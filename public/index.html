@@ -618,42 +618,54 @@ historyBtn.addEventListener("click", () => {
   </script>
 
   <script>
-  // ⏱ AUTO LOCK AFTER INACTIVITY (1 min)
-  let inactivityTimer;
+/* =========================================================
+   🔒 AUTO LOCK + MANUAL LOCK (HOSTED VERSION)
+   ========================================================= */
 
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(lockJarvis, 60 * 1000); // 1 minute
+let inactivityTimer;
+
+/* 🔁 RESET TIMER ON USER ACTIVITY */
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(lockJarvis, 60 * 1000); // 1 minute
+}
+
+/* 🔒 LOCK FUNCTION (AUTO + MANUAL) */
+async function lockJarvis() {
+  try {
+    await fetch("https://ja-r-v-i-s-7vbn.onrender.com/lock", {
+      method: "POST",
+      credentials: "include"   // IMPORTANT for sessions
+    });
+  } catch (err) {
+    console.warn("Lock request failed (network issue)");
   }
 
-  async function lockJarvis() {
-    await fetch("/lock", { method: "POST" });
-    window.location.href = "/login";
-  }
+  // Redirect to login page
+  window.location.href = "https://ja-r-v-i-s-7vbn.onrender.com/login";
+}
 
-  // Detect activity
-  ["mousemove", "keydown", "click", "touchstart"].forEach(evt => {
-    document.addEventListener(evt, resetInactivityTimer);
-  });
+/* 🖱️ DETECT USER ACTIVITY */
+["mousemove", "keydown", "click", "touchstart"].forEach(event => {
+  document.addEventListener(event, resetInactivityTimer);
+});
 
-  resetInactivityTimer();
+/* ▶ START TIMER ON PAGE LOAD */
+resetInactivityTimer();
 
-  /* 🔐 MANUAL LOCK BUTTON */
+/* 🔘 MANUAL LOCK BUTTON */
 const lockBtn = document.getElementById("lock-btn");
 
 if (lockBtn) {
   lockBtn.addEventListener("click", async () => {
-    playJarvisSound("panelClose"); // 🔊 shutdown sound
-    await fetch("/lock", { method: "POST" });
+    // Optional shutdown sound
+    if (typeof playJarvisSound === "function") {
+      playJarvisSound("panelClose");
+    }
 
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 300);
+    await lockJarvis();
   });
 }
-
-
-
 </script>
 
 
